@@ -1,0 +1,548 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chat</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Rubik:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #07060d;
+    --panel: #171226;
+    --panel-hover: #211a38;
+    --line: #3a2f5c;
+    --cyan: #33fff0;
+    --pink: #ff2e88;
+    --gold: #ffcf4d;
+    --green: #39ff6a;
+    --text: #f3f1fb;
+    --muted: #8b84ab;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    height: 100%;
+    margin: 0;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rubik', sans-serif;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  header {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  header .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 8px var(--green);
+    animation: dotPulse 1.6s ease-in-out infinite;
+  }
+
+  @keyframes dotPulse {
+    0%, 100% { box-shadow: 0 0 6px var(--green); }
+    50% { box-shadow: 0 0 14px var(--green); }
+  }
+
+  header h1 {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.75rem;
+    margin: 0;
+    color: var(--cyan);
+    text-shadow: 0 0 8px rgba(51,255,240,0.6);
+  }
+
+  header .status {
+    margin-left: auto;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
+  main {
+    flex: 1;
+    display: flex;
+    min-height: 0;
+  }
+
+  /* ---- Player list sidebar ---- */
+  #playerSidebar {
+    flex: 0 0 200px;
+    border-right: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    overflow-y: auto;
+  }
+
+  .sidebar-label {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.55rem;
+    color: var(--muted);
+    letter-spacing: 0.05em;
+    padding: 14px 14px 8px;
+  }
+
+  #playerList {
+    list-style: none;
+    margin: 0;
+    padding: 0 8px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  #playerList li button {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-align: left;
+    background: none;
+    border: none;
+    border-radius: 8px;
+    color: var(--text);
+    padding: 9px 10px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: background 0.15s ease;
+  }
+
+  #playerList li button:hover {
+    background: var(--panel-hover);
+  }
+
+  #playerList li button.active-target {
+    background: rgba(51,255,240,0.12);
+    color: var(--cyan);
+    font-weight: 700;
+  }
+
+  #playerList .player-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    background: var(--green);
+    box-shadow: 0 0 5px var(--green);
+    flex-shrink: 0;
+  }
+
+  #playerList .lobby-icon {
+    font-size: 0.9rem;
+  }
+
+  .empty-players {
+    color: var(--muted);
+    font-size: 0.78rem;
+    padding: 6px 10px;
+  }
+
+  /* ---- Chat main area ---- */
+  .chat-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  #chatTargetLabel {
+    padding: 10px 16px;
+    font-size: 0.78rem;
+    color: var(--muted);
+    border-bottom: 1px solid var(--line);
+    flex-shrink: 0;
+  }
+
+  #chatTargetLabel strong {
+    color: var(--pink);
+  }
+
+  #log {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .msg {
+    max-width: 75%;
+    padding: 10px 14px;
+    border-radius: 14px;
+    font-size: 0.92rem;
+    line-height: 1.4;
+    word-wrap: break-word;
+  }
+
+  .msg .sender {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    margin-bottom: 3px;
+    opacity: 0.75;
+  }
+
+  .msg.me {
+    align-self: flex-end;
+    background: var(--cyan);
+    color: #04211f;
+    border-bottom-right-radius: 4px;
+  }
+
+  .msg.them {
+    align-self: flex-start;
+    background: var(--panel-hover);
+    color: var(--text);
+    border: 1px solid var(--line);
+    border-bottom-left-radius: 4px;
+  }
+
+  .msg.dm.me {
+    background: var(--pink);
+    color: #22030f;
+  }
+
+  .msg.dm.them {
+    border-color: var(--pink);
+  }
+
+  .msg.system {
+    align-self: center;
+    background: none;
+    color: var(--muted);
+    font-size: 0.78rem;
+    font-style: italic;
+  }
+
+  form {
+    display: flex;
+    gap: 10px;
+    padding: 14px;
+    border-top: 1px solid var(--line);
+    background: var(--panel);
+    flex-shrink: 0;
+  }
+
+  input[type="text"] {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 12px 14px;
+    font-family: 'Rubik', sans-serif;
+    font-size: 0.95rem;
+  }
+
+  input[type="text"]:focus {
+    outline: none;
+    border-color: var(--cyan);
+  }
+
+  button {
+    background: var(--cyan);
+    color: #04211f;
+    border: none;
+    border-radius: 8px;
+    padding: 0 18px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Rubik', sans-serif;
+  }
+
+  button:hover {
+    background: #5dfff5;
+  }
+
+  .setup-warning {
+    margin: auto;
+    max-width: 420px;
+    text-align: center;
+    padding: 24px;
+    color: var(--muted);
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+
+  .setup-warning code {
+    background: var(--panel);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--cyan);
+  }
+
+  @media (max-width: 640px) {
+    #playerSidebar {
+      flex: 0 0 130px;
+    }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <span class="dot"></span>
+  <h1>CHAT</h1>
+  <span class="status" id="statusLabel">connecting...</span>
+</header>
+
+<main>
+  <div id="playerSidebar">
+    <span class="sidebar-label">PLAYERS ONLINE</span>
+    <ul id="playerList"></ul>
+  </div>
+
+  <div class="chat-main">
+    <div id="chatTargetLabel">Talking in: <strong id="chatTargetName">Lobby (everyone)</strong></div>
+    <div id="log"></div>
+    <form id="chatForm">
+      <input type="text" id="messageInput" placeholder="Type a message..." autocomplete="off" required>
+      <button type="submit">Send</button>
+    </form>
+  </div>
+</main>
+
+<!-- Supabase client -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+<script>
+  // ======================================================
+  // PASTE YOUR OWN SUPABASE PROJECT URL AND ANON KEY BELOW.
+  // Get these from Project Settings > API in your Supabase
+  // dashboard. The anon key is safe to expose publicly --
+  // it's designed for use in client-side code like this.
+  // ======================================================
+  const SUPABASE_URL = "https://oyzhwiufptwdtthjlagd.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_QzadsJMfQQOVdm4Jr6b02Q_bxpJwykn";
+
+  // A fixed "room" so this reuses the same messages table as
+  // the tic-tac-toe game, without needing separate chat rooms.
+  const ROOM_CODE = "lobby";
+
+  const log = document.getElementById('log');
+  const form = document.getElementById('chatForm');
+  const input = document.getElementById('messageInput');
+  const statusLabel = document.getElementById('statusLabel');
+  const playerListEl = document.getElementById('playerList');
+  const chatTargetName = document.getElementById('chatTargetName');
+
+  const isConfigured = SUPABASE_URL !== "YOUR_SUPABASE_URL";
+
+  function addMessage(text, kind, name) {
+    const div = document.createElement('div');
+    div.className = 'msg ' + kind;
+    if (name) {
+      const senderSpan = document.createElement('span');
+      senderSpan.className = 'sender';
+      senderSpan.textContent = name;
+      div.appendChild(senderSpan);
+    }
+    div.appendChild(document.createTextNode(text));
+    log.appendChild(div);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  if (!isConfigured) {
+    statusLabel.textContent = 'not set up';
+    log.innerHTML = `
+      <div class="setup-warning">
+        This chat isn't connected yet.<br><br>
+        Open <code>game-10.html</code> and replace
+        <code>YOUR_SUPABASE_URL</code> and
+        <code>YOUR_SUPABASE_ANON_KEY</code> with your own values
+        from the Supabase dashboard, then reload this page.
+      </div>
+    `;
+    form.style.display = 'none';
+  } else {
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    let myName = null;
+    while (!myName) {
+      myName = prompt('Enter a display name to join the chat:');
+    }
+
+    // null = public Lobby view. A string = DM view with that player.
+    let activeTarget = null;
+    let onlinePlayers = [];
+
+    statusLabel.textContent = 'connected as ' + myName;
+
+    // ---- Basic word filter ----
+    const BANNED_WORDS = ["fuck", "shit", "bitch", "asshole", "bastard", "dick", "whore", "slut"];
+
+    function containsBannedWord(text) {
+      const lower = text.toLowerCase();
+      return BANNED_WORDS.some(word => {
+        const pattern = new RegExp('\\b' + word + '\\b', 'i');
+        return pattern.test(lower);
+      });
+    }
+
+    // ---- Player list (Supabase Presence) ----
+    const presenceChannel = supabase.channel('presence-' + ROOM_CODE, {
+      config: { presence: { key: myName } }
+    });
+
+    function renderPlayerList() {
+      playerListEl.innerHTML = '';
+
+      const lobbyLi = document.createElement('li');
+      const lobbyBtn = document.createElement('button');
+      lobbyBtn.innerHTML = '<span class="lobby-icon">💬</span> Lobby';
+      lobbyBtn.classList.toggle('active-target', activeTarget === null);
+      lobbyBtn.addEventListener('click', () => switchTarget(null));
+      lobbyLi.appendChild(lobbyBtn);
+      playerListEl.appendChild(lobbyLi);
+
+      const others = onlinePlayers.filter(name => name !== myName);
+
+      if (others.length === 0) {
+        const empty = document.createElement('div');
+        empty.className = 'empty-players';
+        empty.textContent = 'No one else online yet';
+        playerListEl.appendChild(empty);
+        return;
+      }
+
+      others.forEach(name => {
+        const li = document.createElement('li');
+        const btn = document.createElement('button');
+        btn.innerHTML = '<span class="player-dot"></span> ' + name;
+        btn.classList.toggle('active-target', activeTarget === name);
+        btn.addEventListener('click', () => switchTarget(name));
+        li.appendChild(btn);
+        playerListEl.appendChild(li);
+      });
+    }
+
+    presenceChannel
+      .on('presence', { event: 'sync' }, () => {
+        const state = presenceChannel.presenceState();
+        onlinePlayers = Object.keys(state);
+        renderPlayerList();
+      })
+      .subscribe(async (status) => {
+        if (status === 'SUBSCRIBED') {
+          await presenceChannel.track({ name: myName, online_at: Date.now() });
+        }
+      });
+
+    // ---- Switching between Lobby and a DM ----
+    async function switchTarget(name) {
+      activeTarget = name;
+      chatTargetName.textContent = name ? name + ' (private)' : 'Lobby (everyone)';
+      renderPlayerList();
+      await loadMessagesForTarget();
+    }
+
+    async function loadMessagesForTarget() {
+      log.innerHTML = '';
+
+      let query = supabase
+        .from('messages')
+        .select('*')
+        .eq('room_code', ROOM_CODE)
+        .order('created_at', { ascending: true })
+        .limit(50);
+
+      if (activeTarget === null) {
+        query = query.is('recipient', null);
+      } else {
+        query = query.or(
+          `and(name.eq.${myName},recipient.eq.${activeTarget}),and(name.eq.${activeTarget},recipient.eq.${myName})`
+        );
+      }
+
+      const { data, error } = await query;
+
+      if (error) {
+        addMessage('Could not load messages: ' + error.message, 'system');
+        return;
+      }
+
+      (data || []).forEach(m => {
+        const kind = (m.name === myName ? 'me' : 'them') + (m.recipient ? ' dm' : '');
+        addMessage(m.text, kind, m.name);
+      });
+    }
+
+    function listenForMessages() {
+      supabase
+        .channel('chat-' + ROOM_CODE)
+        .on('postgres_changes', {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'messages',
+          filter: 'room_code=eq.' + ROOM_CODE
+        }, (payload) => {
+          const m = payload.new;
+          if (m.name === myName) return; // already shown on send
+
+          const isPublic = !m.recipient;
+          const isDmToMe = m.recipient === myName;
+          const isDmIAmViewing = activeTarget && (
+            (m.name === activeTarget && m.recipient === myName) ||
+            (m.name === myName && m.recipient === activeTarget)
+          );
+
+          if (activeTarget === null && isPublic) {
+            addMessage(m.text, 'them', m.name);
+          } else if (activeTarget !== null && isDmIAmViewing) {
+            addMessage(m.text, 'them dm', m.name);
+          } else if (isDmToMe && m.name !== activeTarget) {
+            // A DM arrived from someone whose tab isn't open right now --
+            // let them know without switching the view automatically.
+            addMessage('New private message from ' + m.name + ' (click their name to view)', 'system');
+          }
+        })
+        .subscribe();
+    }
+
+    form.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const text = input.value.trim();
+      if (!text) return;
+
+      if (containsBannedWord(text)) {
+        addMessage('Your message wasn\'t sent -- it contains language that isn\'t allowed here.', 'system');
+        input.value = '';
+        return;
+      }
+
+      const kind = 'me' + (activeTarget ? ' dm' : '');
+      addMessage(text, kind, myName);
+      input.value = '';
+
+      const { error } = await supabase.from('messages').insert({
+        room_code: ROOM_CODE,
+        name: myName,
+        text: text,
+        recipient: activeTarget
+      });
+
+      if (error) {
+        addMessage('Message failed to send: ' + error.message, 'system');
+      }
+    });
+
+    loadMessagesForTarget().then(listenForMessages);
+  }
+</script>
+
+</body>
+</html>
