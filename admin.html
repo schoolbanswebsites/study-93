@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chat Moderation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Rubik:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #07060d;
+    --panel: #171226;
+    --panel-hover: #211a38;
+    --line: #3a2f5c;
+    --cyan: #33fff0;
+    --pink: #ff2e88;
+    --gold: #ffcf4d;
+    --text: #f3f1fb;
+    --muted: #8b84ab;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    min-height: 100vh;
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rubik', sans-serif;
+    padding: 40px 20px;
+  }
+
+  .wrap {
+    max-width: 800px;
+    margin: 0 auto;
+  }
+
+  h1 {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 1.1rem;
+    color: var(--cyan);
+    text-shadow: 0 0 8px rgba(51,255,240,0.6);
+    margin: 0 0 8px;
+  }
+
+  p.subtitle {
+    color: var(--muted);
+    margin: 0 0 28px;
+    font-size: 0.9rem;
+  }
+
+  .gate {
+    max-width: 340px;
+    margin: 80px auto;
+    text-align: center;
+  }
+
+  .gate input {
+    width: 100%;
+    background: var(--panel);
+    border: 2px solid var(--line);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 12px;
+    font-size: 1rem;
+    margin-bottom: 12px;
+    text-align: center;
+  }
+
+  .gate button {
+    width: 100%;
+    background: var(--cyan);
+    color: #04211f;
+    border: none;
+    border-radius: 8px;
+    padding: 12px;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    overflow: hidden;
+  }
+
+  th, td {
+    padding: 10px 12px;
+    text-align: left;
+    font-size: 0.85rem;
+    border-bottom: 1px solid var(--line);
+  }
+
+  th {
+    color: var(--gold);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+  }
+
+  tr:last-child td {
+    border-bottom: none;
+  }
+
+  td.flagged {
+    color: var(--pink);
+    font-weight: 700;
+  }
+
+  .del-btn {
+    background: var(--pink);
+    color: #22030f;
+    border: none;
+    border-radius: 6px;
+    padding: 6px 10px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  .del-btn:hover {
+    background: #ff5da3;
+  }
+
+  .empty {
+    color: var(--muted);
+    text-align: center;
+    padding: 30px;
+  }
+
+  .setup-warning {
+    max-width: 480px;
+    margin: 80px auto;
+    text-align: center;
+    color: var(--muted);
+    line-height: 1.6;
+  }
+
+  .setup-warning code {
+    background: var(--panel);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--cyan);
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap" id="app">
+  <!-- filled by JS -->
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  // ======================================================
+  // PASTE YOUR OWN SUPABASE PROJECT URL AND ANON KEY BELOW --
+  // same values you used in game-10.html.
+  // ======================================================
+  const SUPABASE_URL = "https://oyzhwiufptwdtthjlagd.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_QzadsJMfQQOVdm4Jr6b02Q_bxpJwykn";
+
+  // Simple passcode so random visitors can't casually open this
+  // page. This is NOT real security -- anyone who views this
+  // file's source can see the passcode. Don't rely on this alone
+  // if the messages are sensitive.
+  const ADMIN_PASSCODE = "Game10.html";
+
+  // Same word list as game-10.html, used here just to highlight
+  // rows that contain flagged language.
+  const BANNED_WORDS = ["fuck", "shit", "bitch", "asshole", "bastard", "dick", "whore", "slut"];
+
+  function containsBannedWord(text) {
+    const lower = text.toLowerCase();
+    return BANNED_WORDS.some(word => {
+      const pattern = new RegExp('\\b' + word + '\\b', 'i');
+      return pattern.test(lower);
+    });
+  }
+
+  const app = document.getElementById('app');
+  const isConfigured = SUPABASE_URL !== "YOUR_SUPABASE_URL";
+
+  if (!isConfigured) {
+    app.innerHTML = `
+      <div class="setup-warning">
+        Not set up yet.<br><br>
+        Open <code>admin.html</code> and paste in your
+        <code>SUPABASE_URL</code> and <code>SUPABASE_ANON_KEY</code>,
+        then reload this page.
+      </div>
+    `;
+  } else {
+    renderGate();
+  }
+
+  function renderGate() {
+    app.innerHTML = `
+      <div class="gate">
+        <input type="password" id="passInput" placeholder="Enter passcode">
+        <button id="enterBtn">Enter</button>
+      </div>
+    `;
+    document.getElementById('enterBtn').addEventListener('click', checkPasscode);
+    document.getElementById('passInput').addEventListener('keydown', (e) => {
+      if (e.key === 'Enter') checkPasscode();
+    });
+  }
+
+  function checkPasscode() {
+    const val = document.getElementById('passInput').value;
+    if (val === ADMIN_PASSCODE) {
+      renderDashboard();
+    } else {
+      alert('Wrong passcode.');
+    }
+  }
+
+  async function renderDashboard() {
+    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    app.innerHTML = `
+      <h1>CHAT MODERATION</h1>
+      <p class="subtitle">All messages across every room, newest first. Flagged messages are highlighted.</p>
+      <table id="msgTable">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Room</th>
+            <th>From</th>
+            <th>To</th>
+            <th>Message</th>
+            <th></th>
+          </tr>
+        </thead>
+        <tbody id="msgBody"></tbody>
+      </table>
+    `;
+
+    const tbody = document.getElementById('msgBody');
+
+    async function loadMessages() {
+      const { data, error } = await supabase
+        .from('messages')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(200);
+
+      if (error) {
+        tbody.innerHTML = `<tr><td colspan="6" class="empty">Error loading messages: ${error.message}</td></tr>`;
+        return;
+      }
+
+      if (!data || data.length === 0) {
+        tbody.innerHTML = `<tr><td colspan="6" class="empty">No messages yet.</td></tr>`;
+        return;
+      }
+
+      tbody.innerHTML = '';
+      data.forEach(m => addRow(m));
+    }
+
+    function addRow(m) {
+      const tr = document.createElement('tr');
+      const flagged = containsBannedWord(m.text);
+      const time = new Date(m.created_at).toLocaleString();
+      const toLabel = m.recipient ? escapeHtml(m.recipient) : 'Everyone';
+
+      tr.innerHTML = `
+        <td>${time}</td>
+        <td>${escapeHtml(m.room_code)}</td>
+        <td>${escapeHtml(m.name)}</td>
+        <td>${toLabel}</td>
+        <td class="${flagged ? 'flagged' : ''}">${escapeHtml(m.text)}</td>
+        <td><button class="del-btn" data-id="${m.id}">Delete</button></td>
+      `;
+
+      tr.querySelector('.del-btn').addEventListener('click', async () => {
+        await supabase.from('messages').delete().eq('id', m.id);
+        tr.remove();
+      });
+
+      tbody.appendChild(tr);
+    }
+
+    function escapeHtml(str) {
+      const div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    // Live-add new messages as they come in, at the top.
+    supabase
+      .channel('admin-watch')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
+        const emptyRow = tbody.querySelector('.empty');
+        if (emptyRow) emptyRow.closest('tr').remove();
+        const tr = document.createElement('tr');
+        tbody.insertBefore(tr, tbody.firstChild);
+        const m = payload.new;
+        const flagged = containsBannedWord(m.text);
+        const time = new Date(m.created_at).toLocaleString();
+        const toLabel = m.recipient ? escapeHtml(m.recipient) : 'Everyone';
+        tr.innerHTML = `
+          <td>${time}</td>
+          <td>${escapeHtml(m.room_code)}</td>
+          <td>${escapeHtml(m.name)}</td>
+          <td>${toLabel}</td>
+          <td class="${flagged ? 'flagged' : ''}">${escapeHtml(m.text)}</td>
+          <td><button class="del-btn" data-id="${m.id}">Delete</button></td>
+        `;
+        tr.querySelector('.del-btn').addEventListener('click', async () => {
+          await supabase.from('messages').delete().eq('id', m.id);
+          tr.remove();
+        });
+      })
+      .subscribe();
+
+    loadMessages();
+  }
+</script>
+
+</body>
+</html>

@@ -1,0 +1,3784 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>STUDY</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Rubik:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #07060d;
+    --panel: #171226;
+    --panel-hover: #211a38;
+    --line: #3a2f5c;
+    --cyan: #33fff0;
+    --pink: #ff2e88;
+    --gold: #ffcf4d;
+    --text: #f3f1fb;
+    --muted: #8b84ab;
+  }
+
+  * { box-sizing: border-box; }
+
+  html { background: var(--bg); }
+
+  body {
+    margin: 0;
+    position: relative;
+    min-height: 100vh;
+    background:
+      radial-gradient(circle at 15% 0%, rgba(51,255,240,0.10), transparent 45%),
+      radial-gradient(circle at 85% 15%, rgba(255,46,136,0.10), transparent 45%),
+      linear-gradient(180deg, var(--bg) 0%, #0d0a1a 60%, #150e26 100%);
+    color: var(--text);
+    font-family: 'Rubik', sans-serif;
+    display: flex;
+    justify-content: center;
+    padding: 110px 24px 90px;
+    overflow-x: hidden;
+  }
+
+  /* retro floor grid glowing at the bottom of the page */
+  body::before {
+    content: '';
+    position: fixed;
+    left: 0; right: 0; bottom: 0;
+    height: 45vh;
+    pointer-events: none;
+    background-image:
+      linear-gradient(rgba(51,255,240,0.16) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(51,255,240,0.16) 1px, transparent 1px);
+    background-size: 48px 48px;
+    transform: perspective(400px) rotateX(60deg);
+    transform-origin: bottom;
+    mask-image: linear-gradient(to top, black, transparent);
+    -webkit-mask-image: linear-gradient(to top, black, transparent);
+    opacity: 0.5;
+    z-index: 0;
+  }
+
+  /* scanline overlay for a CRT feel */
+  body::after {
+    content: '';
+    position: fixed;
+    inset: 0;
+    pointer-events: none;
+    background: repeating-linear-gradient(
+      to bottom,
+      rgba(0,0,0,0) 0px,
+      rgba(0,0,0,0) 2px,
+      rgba(0,0,0,0.10) 3px
+    );
+    z-index: 1;
+    mix-blend-mode: overlay;
+  }
+
+  .layout {
+    width: 100%;
+    max-width: 1200px;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    position: relative;
+    z-index: 2;
+  }
+
+  header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px;
+    text-align: center;
+    padding: 22px 20px 26px;
+    background: linear-gradient(180deg, var(--panel) 0%, rgba(23,18,38,0.4) 100%);
+    border: 3px solid var(--line);
+    border-radius: 16px;
+    box-shadow:
+      0 0 0 3px rgba(51,255,240,0.08),
+      0 0 30px rgba(51,255,240,0.12),
+      inset 0 0 40px rgba(255,46,136,0.06);
+    position: relative;
+  }
+
+  header::before,
+  header::after {
+    content: '';
+    position: absolute;
+    top: 10px;
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: var(--gold);
+    box-shadow: 0 0 8px var(--gold);
+  }
+
+  header::before { left: 14px; }
+  header::after { right: 14px; }
+
+  h1 {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 1.9rem;
+    line-height: 1.5;
+    margin: 0;
+    color: var(--cyan);
+    letter-spacing: 0.04em;
+    text-shadow:
+      0 0 8px rgba(51,255,240,0.8),
+      0 0 22px rgba(51,255,240,0.5),
+      0 0 2px #fff;
+    animation: flicker 4s infinite;
+  }
+
+  @keyframes flicker {
+    0%, 96%, 100% { opacity: 1; }
+    97% { opacity: 0.82; }
+    98% { opacity: 1; }
+    99% { opacity: 0.88; }
+  }
+
+  p.subtitle {
+    margin: 0;
+    color: var(--gold);
+    font-weight: 700;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.6rem;
+    animation: blink 1.4s steps(1) infinite;
+  }
+
+  @keyframes blink {
+    0%, 60% { opacity: 1; }
+    61%, 100% { opacity: 0.25; }
+  }
+
+
+  .game-search {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 22px 0 16px;
+    padding: 10px 14px;
+    background: var(--panel);
+    border: 2px solid var(--line);
+    border-radius: 12px;
+    box-shadow: 0 8px 24px rgba(0,0,0,.18);
+  }
+
+  .game-search-icon {
+    font-size: 1.25rem;
+    color: var(--gold);
+  }
+
+  #gameSearch {
+    flex: 1;
+    min-width: 0;
+    border: 0;
+    outline: 0;
+    background: transparent;
+    color: var(--text);
+    font: 700 0.85rem 'Press Start 2P', monospace;
+  }
+
+  #gameSearch::placeholder {
+    color: var(--muted);
+    opacity: .8;
+  }
+
+  .search-status {
+    color: var(--muted);
+    font: 700 0.6rem 'Press Start 2P', monospace;
+    white-space: nowrap;
+  }
+
+  .game-list li.search-hidden {
+    display: none;
+  }
+
+  .no-search-results {
+    padding: 24px;
+    text-align: center;
+    color: var(--muted);
+    border: 2px dashed var(--line);
+    border-radius: 12px;
+    font: 700 0.7rem 'Press Start 2P', monospace;
+  }
+
+  ul.game-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 18px;
+  }
+
+  ul.game-list li {
+    aspect-ratio: 1 / 1;
+  }
+
+  .game-button {
+    width: 100%;
+    height: 100%;
+    background:
+      linear-gradient(155deg, var(--panel-hover) 0%, var(--panel) 60%);
+    border: 2px solid var(--line);
+    border-radius: 12px;
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    gap: 8px;
+    color: var(--muted);
+    position: relative;
+    overflow: hidden;
+    box-shadow:
+      0 4px 0 rgba(0,0,0,0.45),
+      inset 0 1px 0 rgba(255,255,255,0.05);
+    transition: border-color 0.15s ease, background 0.15s ease, transform 0.1s ease, color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .game-button::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(135deg, rgba(51,255,240,0.18), rgba(255,46,136,0.18));
+    opacity: 0;
+    transition: opacity 0.15s ease;
+  }
+
+  /* ============== FAVORITE STAR ============== */
+
+  .fav-star {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    z-index: 2;
+    width: 24px;
+    height: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(7,6,13,0.55);
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    color: var(--muted);
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: color 0.15s ease, border-color 0.15s ease, transform 0.1s ease;
+  }
+
+  .fav-star:hover {
+    color: var(--gold);
+    border-color: var(--gold);
+    transform: scale(1.1);
+  }
+
+  .fav-star.favorited {
+    color: var(--gold);
+    border-color: var(--gold);
+    text-shadow: 0 0 6px rgba(255,207,77,0.7);
+  }
+
+  /* ============== FAVORITES SECTION ============== */
+
+  .favorites-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  .favorites-section h2 {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.75rem;
+    color: var(--gold);
+    text-shadow: 0 0 8px rgba(255,207,77,0.5);
+    margin: 0;
+    letter-spacing: 0.03em;
+  }
+
+  .favorites-list {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: flex;
+    gap: 14px;
+    overflow-x: auto;
+    padding-bottom: 6px;
+  }
+
+  .favorites-list li {
+    flex: 0 0 100px;
+    aspect-ratio: 1 / 1;
+  }
+
+  .favorites-empty {
+    color: var(--muted);
+    font-size: 0.85rem;
+    padding: 4px 0;
+  }
+
+  .game-button:hover,
+  .game-button:focus-visible {
+    border-color: var(--cyan);
+    color: var(--text);
+    outline: none;
+    transform: translateY(-3px);
+    box-shadow:
+      0 6px 0 rgba(0,0,0,0.45),
+      0 0 18px rgba(51,255,240,0.45),
+      inset 0 1px 0 rgba(255,255,255,0.08);
+  }
+
+  .game-button:hover::before,
+  .game-button:focus-visible::before {
+    opacity: 1;
+  }
+
+  .game-button:active {
+    transform: translateY(0px);
+    box-shadow:
+      0 1px 0 rgba(0,0,0,0.45),
+      inset 0 1px 0 rgba(255,255,255,0.05);
+  }
+
+  .game-button:focus-visible {
+    box-shadow: 0 0 0 3px rgba(51,255,240,0.35);
+  }
+
+  .game-button.active {
+    border-color: #39ff6a;
+    color: var(--text);
+    box-shadow:
+      0 6px 0 rgba(0,0,0,0.45),
+      0 0 20px rgba(57,255,106,0.6),
+      inset 0 1px 0 rgba(255,255,255,0.08);
+    animation: activePulse 1.6s ease-in-out infinite;
+  }
+
+  @keyframes activePulse {
+    0%, 100% {
+      box-shadow:
+        0 6px 0 rgba(0,0,0,0.45),
+        0 0 16px rgba(57,255,106,0.5),
+        inset 0 1px 0 rgba(255,255,255,0.08);
+    }
+    50% {
+      box-shadow:
+        0 6px 0 rgba(0,0,0,0.45),
+        0 0 30px rgba(57,255,106,0.85),
+        inset 0 1px 0 rgba(255,255,255,0.08);
+    }
+  }
+
+  .slot-icon {
+    width: 28px;
+    height: 28px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.6;
+    position: relative;
+    z-index: 1;
+    filter: drop-shadow(0 0 4px currentColor);
+  }
+
+  .slot-number {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.05em;
+    position: relative;
+    z-index: 1;
+    color: var(--gold);
+  }
+
+  .slot-label {
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    position: relative;
+    z-index: 1;
+    text-align: center;
+    padding: 0 6px;
+  }
+
+  .player {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .player-label {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.72rem;
+    color: var(--pink);
+    letter-spacing: 0.06em;
+    text-shadow: 0 0 8px rgba(255,46,136,0.6);
+  }
+
+  /* arcade-cabinet screen bezel */
+  .player-frame-wrap {
+    border: 10px solid #1a1526;
+    border-radius: 20px;
+    background: var(--panel);
+    overflow: hidden;
+    aspect-ratio: 16 / 9;
+    display: flex;
+    box-shadow:
+      0 0 0 2px var(--line),
+      0 0 40px rgba(51,255,240,0.15),
+      inset 0 0 40px rgba(0,0,0,0.6);
+    position: relative;
+  }
+
+  .player-frame-wrap::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    box-shadow: inset 0 0 60px rgba(0,0,0,0.5);
+    border-radius: 10px;
+    z-index: 5;
+  }
+
+  .player-frame-wrap iframe {
+    width: 100%;
+    height: 100%;
+    border: none;
+    position: relative;
+    z-index: 1;
+  }
+
+  .player-controls {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 10px;
+    padding: 4px;
+    background: linear-gradient(155deg, var(--panel-hover) 0%, var(--panel) 60%);
+    border: 2px solid var(--line);
+    border-radius: 10px;
+  }
+
+  .expand-game-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+    flex: 1;
+    padding: 14px 20px;
+    background: transparent;
+    border: none;
+    border-radius: 8px;
+    color: var(--gold);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.68rem;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    transition: background 0.15s ease, color 0.15s ease, transform 0.1s ease;
+  }
+
+  .expand-game-btn:hover,
+  .expand-game-btn:focus-visible {
+    background: rgba(51,255,240,0.10);
+    color: var(--cyan);
+    outline: none;
+  }
+
+  .expand-game-btn:active {
+    transform: scale(0.98);
+  }
+
+  .expand-icon {
+    font-family: Arial, sans-serif;
+    font-size: 1.4rem;
+    line-height: 1;
+    filter: drop-shadow(0 0 4px currentColor);
+  }
+
+  .expand-hint {
+    color: var(--muted);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.52rem;
+    letter-spacing: 0.03em;
+    opacity: 0.85;
+    padding-right: 14px;
+    white-space: nowrap;
+  }
+
+  /* When the game player is in native browser fullscreen, keep the same arcade bezel. */
+  .player-frame-wrap:fullscreen {
+    width: 100vw;
+    height: 100vh;
+    aspect-ratio: auto;
+    border-radius: 0;
+    border-width: 10px;
+    background: #000;
+  }
+
+  .player-frame-wrap:fullscreen iframe {
+    width: 100%;
+    height: 100%;
+  }
+
+  .player-frame-wrap:-webkit-full-screen {
+    width: 100vw;
+    height: 100vh;
+    aspect-ratio: auto;
+    border-radius: 0;
+    border-width: 10px;
+    background: #000;
+  }
+
+  .player-frame-wrap:-webkit-full-screen iframe {
+    width: 100%;
+    height: 100%;
+  }
+
+  body.game-expanded-page {
+    overflow: hidden;
+  }
+
+  body.game-expanded-page > *:not(.layout) {
+    display: none !important;
+  }
+
+  body.game-expanded-page .layout {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    max-width: none;
+    padding: 0;
+    gap: 0;
+    z-index: 9999;
+  }
+
+  body.game-expanded-page .layout > header,
+  body.game-expanded-page .layout > .game-list,
+  body.game-expanded-page .player > .player-label,
+  body.game-expanded-page .player > .player-controls {
+    display: none;
+  }
+
+  body.game-expanded-page .player {
+    width: 100%;
+    height: 100%;
+  }
+
+  .player-frame-wrap.game-expanded {
+    position: fixed;
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    max-width: none;
+    aspect-ratio: auto;
+    z-index: 9999;
+    border-radius: 0;
+    border-width: 10px;
+    background: #000;
+  }
+
+  .player-frame-wrap.game-expanded iframe {
+    width: 100%;
+    height: 100%;
+  }
+
+  .placeholder {
+    margin: auto;
+    text-align: center;
+    color: var(--muted);
+    font-size: 0.95rem;
+    padding: 24px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* ============== SETTINGS BUTTON + PANEL ============== */
+
+  #settingsBtn {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: linear-gradient(155deg, var(--panel-hover) 0%, var(--panel) 60%);
+    border: 2px solid var(--line);
+    border-radius: 10px;
+    color: var(--gold);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.6rem;
+    letter-spacing: 0.04em;
+    cursor: pointer;
+    box-shadow:
+      0 3px 0 rgba(0,0,0,0.45),
+      0 0 12px rgba(255,207,77,0.25),
+      inset 0 1px 0 rgba(255,255,255,0.05);
+    transition: border-color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+  }
+
+  #settingsBtn:hover,
+  #settingsBtn:focus-visible {
+    border-color: var(--cyan);
+    outline: none;
+    transform: translateY(-2px);
+    box-shadow:
+      0 5px 0 rgba(0,0,0,0.45),
+      0 0 14px rgba(51,255,240,0.4),
+      inset 0 1px 0 rgba(255,255,255,0.08);
+  }
+
+  #settingsBtn:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 0 rgba(0,0,0,0.45);
+  }
+
+
+  /* ============== SHOP BUTTON + SHOP OVERLAY ============== */
+  #shopBtn {
+    position: fixed;
+    top: 20px;
+    left: 330px;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: linear-gradient(155deg, var(--panel-hover), var(--panel));
+    border: 2px solid var(--line);
+    border-radius: 10px;
+    color: var(--gold);
+    font-family: 'Press Start 2P', monospace;
+    font-size: .6rem;
+    letter-spacing: .04em;
+    cursor: pointer;
+    box-shadow: 0 3px 0 rgba(0,0,0,.45), 0 0 12px rgba(255,207,77,.22);
+    transition: border-color .15s ease, transform .1s ease, box-shadow .15s ease;
+  }
+  #shopBtn:hover, #shopBtn:focus-visible {
+    border-color: var(--gold);
+    outline: none;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 0 rgba(0,0,0,.45), 0 0 18px rgba(255,207,77,.42);
+  }
+  #shopBtn:active { transform: translateY(0); }
+  body.gated #shopBtn { display:none; }
+
+  #shopOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: radial-gradient(circle at 50% 30%, rgba(255,207,77,.08), transparent 35%), rgba(4,3,10,.86);
+    backdrop-filter: blur(7px);
+    -webkit-backdrop-filter: blur(7px);
+  }
+  #shopOverlay.open { display:flex; }
+
+  #shopPanel {
+    width:100%;
+    max-width:720px;
+    max-height:88vh;
+    overflow-y:auto;
+    position:relative;
+    padding:26px;
+    background:linear-gradient(145deg, rgba(30,22,51,.98), rgba(10,8,20,.98));
+    border:2px solid var(--gold);
+    border-radius:22px;
+    box-shadow:0 0 0 1px rgba(51,255,240,.22), 0 0 45px rgba(255,207,77,.20), 0 28px 80px rgba(0,0,0,.55);
+  }
+  #shopPanel::before {
+    content:'';
+    position:absolute;
+    inset:8px;
+    border:1px solid rgba(51,255,240,.12);
+    border-radius:16px;
+    pointer-events:none;
+  }
+  #shopPanel h2 {
+    position:relative;
+    margin:0 0 8px;
+    color:var(--gold);
+    text-shadow:0 0 10px rgba(255,207,77,.65);
+    font:700 .95rem 'Press Start 2P',monospace;
+    letter-spacing:.04em;
+  }
+  .shop-subtitle {
+    position:relative;
+    color:var(--muted);
+    font-size:.76rem;
+    line-height:1.5;
+    margin-bottom:16px;
+  }
+  .shop-balance {
+    position:relative;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    gap:12px;
+    padding:13px 15px;
+    margin-bottom:18px;
+    border:1px solid var(--line);
+    border-radius:12px;
+    background:rgba(7,6,13,.58);
+  }
+  .shop-balance-label {
+    color:var(--muted);
+    font:700 .48rem 'Press Start 2P',monospace;
+    letter-spacing:.06em;
+  }
+  #shopCredits {
+    color:var(--gold);
+    font:700 .72rem 'Press Start 2P',monospace;
+    text-shadow:0 0 8px rgba(255,207,77,.55);
+  }
+  .shop-section-title {
+    position:relative;
+    margin:18px 0 9px;
+    color:var(--cyan);
+    font:700 .58rem 'Press Start 2P',monospace;
+    letter-spacing:.06em;
+  }
+  .shop-grid {
+    position:relative;
+    display:grid;
+    grid-template-columns:repeat(2,minmax(0,1fr));
+    gap:10px;
+  }
+  .shop-item {
+    min-width:0;
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+    padding:14px;
+    background:rgba(7,6,13,.58);
+    border:1px solid var(--line);
+    border-radius:12px;
+  }
+  .shop-item.owned { border-color:rgba(57,255,106,.55); }
+  .shop-item-name {
+    color:var(--text);
+    font-size:.82rem;
+    font-weight:900;
+  }
+  .shop-item-desc {
+    color:var(--muted);
+    font-size:.68rem;
+    line-height:1.45;
+    min-height:2.9em;
+  }
+  .shop-buy {
+    width:100%;
+    margin-top:auto;
+    padding:9px 10px;
+    border:2px solid var(--line);
+    border-radius:8px;
+    background:var(--panel-hover);
+    color:var(--gold);
+    font:700 .48rem 'Press Start 2P',monospace;
+    cursor:pointer;
+  }
+  .shop-buy:hover:not(:disabled) { border-color:var(--gold); box-shadow:0 0 12px rgba(255,207,77,.22); }
+  .shop-buy:disabled { opacity:.45; cursor:not-allowed; }
+  .shop-buy.owned { color:#39ff6a; border-color:#39ff6a; }
+  .shop-close {
+    position:relative;
+    width:100%;
+    margin-top:18px;
+    padding:12px;
+    border:2px solid var(--line);
+    border-radius:10px;
+    background:var(--panel-hover);
+    color:var(--text);
+    font-family:'Press Start 2P',monospace;
+    font-size:.55rem;
+    cursor:pointer;
+  }
+  .shop-item-icon { width:42px; height:42px; display:grid; place-items:center; border:1px solid rgba(255,207,77,.35); border-radius:10px; color:var(--gold); background:rgba(255,207,77,.06); font-family:'Press Start 2P',monospace; font-size:.65rem; margin-bottom:10px; }
+  .shop-item.owned { border-color:rgba(51,255,240,.45); box-shadow:0 0 18px rgba(51,255,240,.08); }
+  .shop-buy.locked { opacity:.52; cursor:not-allowed; }
+  .shop-buy.owned { border-color:var(--cyan); color:var(--cyan); background:rgba(51,255,240,.08); }
+  .shop-rainbow-name { background:linear-gradient(90deg,#ff2e88,#ffcf4d,#39ff14,#33fff0,#8b5cf6,#ff2e88); background-size:300% 100%; -webkit-background-clip:text; background-clip:text; color:transparent !important; animation:shopRainbow 3s linear infinite; }
+  .shop-diamond-name { color:#dffcff !important; text-shadow:0 0 5px #fff,0 0 12px #33fff0,0 0 22px #8b5cf6; }
+  .shop-fire-name { color:#ffcf4d !important; text-shadow:0 0 5px #ffcf4d,0 0 12px #ff7a18,0 0 22px #ff2e88; }
+  @keyframes shopRainbow { to { background-position:300% 0; } }
+
+  .shop-close:hover { border-color:var(--pink); color:var(--pink); }
+  @media (max-width:700px) {
+    #shopBtn { left:238px; top:12px; font-size:.48rem; padding:9px 10px; }
+    .shop-grid { grid-template-columns:1fr; }
+    #shopPanel { padding:20px; }
+  }
+
+  /* ============== UPDATE BUTTON + LOG ============== */
+  #updatesBtn {
+    position: fixed;
+    top: 20px;
+    left: 176px;
+    z-index: 50;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 16px;
+    background: linear-gradient(155deg, var(--panel-hover), var(--panel));
+    border: 2px solid var(--line);
+    border-radius: 10px;
+    color: var(--cyan);
+    font-family: 'Press Start 2P', monospace;
+    font-size: .6rem;
+    letter-spacing: .04em;
+    cursor: pointer;
+    box-shadow: 0 3px 0 rgba(0,0,0,.45), 0 0 12px rgba(51,255,240,.22);
+    transition: border-color .15s ease, transform .1s ease, box-shadow .15s ease;
+  }
+  #updatesBtn:hover, #updatesBtn:focus-visible {
+    border-color: var(--cyan);
+    outline: none;
+    transform: translateY(-2px);
+    box-shadow: 0 5px 0 rgba(0,0,0,.45), 0 0 18px rgba(51,255,240,.45);
+  }
+  #updatesBtn:active { transform: translateY(0); }
+  #updatesBtn span { font-size: .8rem; }
+  body.gated #updatesBtn { display:none; }
+
+  #updatesOverlay {
+    position: fixed;
+    inset: 0;
+    z-index: 100;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background: radial-gradient(circle at 50% 30%, rgba(51,255,240,.08), transparent 35%), rgba(4,3,10,.84);
+    backdrop-filter: blur(7px);
+    -webkit-backdrop-filter: blur(7px);
+  }
+  #updatesOverlay.open { display: flex; }
+
+  #updatesPanel {
+    width: 100%;
+    max-width: 620px;
+    max-height: 86vh;
+    overflow-y: auto;
+    position: relative;
+    padding: 26px;
+    background: linear-gradient(145deg, rgba(30,22,51,.98), rgba(10,8,20,.98));
+    border: 2px solid var(--cyan);
+    border-radius: 20px;
+    box-shadow: 0 0 0 1px rgba(255,46,136,.25), 0 0 45px rgba(51,255,240,.22), 0 28px 80px rgba(0,0,0,.55);
+  }
+  #updatesPanel::before {
+    content: '';
+    position: absolute;
+    inset: 8px;
+    border: 1px solid rgba(255,46,136,.14);
+    border-radius: 14px;
+    pointer-events: none;
+  }
+  #updatesPanel h2 {
+    position: relative;
+    margin: 0 0 20px;
+    padding-bottom: 14px;
+    border-bottom: 1px dashed var(--line);
+    color: var(--cyan);
+    text-shadow: 0 0 10px rgba(51,255,240,.65);
+    font: 700 .95rem 'Press Start 2P', monospace;
+    letter-spacing: .04em;
+  }
+  .update-entry {
+    position: relative;
+    margin-bottom: 12px;
+    padding: 15px 16px;
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    background: rgba(7,6,13,.55);
+  }
+  .update-date {
+    color: var(--gold);
+    font: 700 .48rem 'Press Start 2P', monospace;
+    letter-spacing: .07em;
+    margin-bottom: 8px;
+  }
+  .update-title {
+    color: var(--text);
+    font-size: 1rem;
+    font-weight: 900;
+    margin-bottom: 5px;
+  }
+  .update-desc {
+    color: var(--muted);
+    font-size: .82rem;
+    line-height: 1.5;
+  }
+  .close-updates {
+    position: relative;
+    margin-top: 8px;
+    width: 100%;
+    padding: 12px;
+    border: 2px solid var(--line);
+    border-radius: 10px;
+    background: var(--panel-hover);
+    color: var(--text);
+    font-family: 'Press Start 2P', monospace;
+    font-size: .55rem;
+    cursor: pointer;
+  }
+  .close-updates:hover { border-color: var(--pink); color: var(--pink); }
+
+  @media (max-width:700px) {
+    #updatesBtn { left: 128px; top: 12px; font-size:.48rem; padding:9px 10px; }
+    #updatesBtn span { font-size:.65rem; }
+  }
+
+  /* ============== MUSIC BUTTON + PLAYER ============== */
+  #musicBtn {
+    position: fixed; top: 20px; left: 20px; z-index: 50;
+    display: flex; align-items: center; gap: 8px; padding: 10px 16px;
+    background: linear-gradient(155deg, var(--panel-hover), var(--panel));
+    border: 2px solid var(--line); border-radius: 10px; color: var(--pink);
+    font-family: 'Press Start 2P', monospace; font-size: .6rem; letter-spacing: .04em; cursor: pointer;
+    box-shadow: 0 3px 0 rgba(0,0,0,.45), 0 0 12px rgba(255,46,136,.25);
+    transition: border-color .15s ease, transform .1s ease, box-shadow .15s ease;
+  }
+  #musicBtn:hover, #musicBtn:focus-visible { border-color: var(--pink); outline: none; transform: translateY(-2px); box-shadow: 0 5px 0 rgba(0,0,0,.45), 0 0 18px rgba(255,46,136,.5); }
+  #musicBtn:active { transform: translateY(0); }
+  #musicBtn .note-icon { font-size: .95rem; }
+  body.gated #musicBtn { display:none; }
+
+  @media (max-width:700px) { #musicBtn { left:12px; top:12px; font-size:.52rem; padding:9px 11px; } }
+
+  #musicOverlay {
+    position:fixed; inset:0; background:radial-gradient(circle at 50% 35%, rgba(255,46,136,.10), transparent 35%), rgba(4,3,10,.84);
+    backdrop-filter:blur(7px); -webkit-backdrop-filter:blur(7px); z-index:100; display:none; align-items:center; justify-content:center; padding:24px;
+  }
+  #musicOverlay.open { display:flex; }
+
+  #musicPanel {
+    width:100%; max-width:620px; max-height:88vh; overflow-y:auto; position:relative; padding:24px;
+    background:linear-gradient(145deg, rgba(30,22,51,.98), rgba(10,8,20,.98));
+    border:2px solid var(--pink); border-radius:22px;
+    box-shadow:0 0 0 1px rgba(51,255,240,.25), 0 0 45px rgba(255,46,136,.25), 0 28px 80px rgba(0,0,0,.55), inset 0 0 55px rgba(51,255,240,.035);
+  }
+  #musicPanel::-webkit-scrollbar { width:7px; }
+  #musicPanel::-webkit-scrollbar-thumb { background:var(--line); border-radius:99px; }
+  #musicPanel::before { content:''; position:absolute; inset:8px; border:1px solid rgba(51,255,240,.12); border-radius:16px; pointer-events:none; }
+
+  .music-close { position:absolute; top:15px; right:16px; z-index:3; width:34px; height:34px; border:1px solid var(--line); border-radius:10px; background:rgba(7,6,13,.65); color:var(--muted); font-size:1.45rem; line-height:1; cursor:pointer; }
+  .music-close:hover { color:var(--pink); border-color:var(--pink); box-shadow:0 0 12px rgba(255,46,136,.3); }
+  .music-topline { font:700 .52rem 'Press Start 2P',monospace; color:var(--muted); letter-spacing:.09em; margin:2px 48px 9px 4px; }
+  .music-live-dot { display:inline-block; width:7px; height:7px; border-radius:50%; background:#39ff6a; box-shadow:0 0 9px #39ff6a; margin-right:5px; }
+  .music-wave { color:var(--cyan); float:right; }
+  #musicPanel h2 { margin:0 0 18px; color:var(--pink); text-shadow:0 0 10px rgba(255,46,136,.7), 0 0 22px rgba(51,255,240,.15); font:700 .95rem 'Press Start 2P',monospace; letter-spacing:.04em; }
+
+  .music-hero { display:grid; grid-template-columns:170px 1fr; gap:24px; align-items:center; padding:20px; border:1px solid var(--line); border-radius:16px; background:linear-gradient(135deg, rgba(51,255,240,.055), rgba(255,46,136,.075)); }
+  #discWrap { display:flex; justify-content:center; align-items:center; position:relative; width:170px; height:170px; }
+  .disc-glow { position:absolute; width:145px; height:145px; border-radius:50%; background:radial-gradient(circle, rgba(255,46,136,.22), transparent 68%); filter:blur(5px); }
+  #disc { width:132px; height:132px; border-radius:50%; position:relative; display:flex; align-items:center; justify-content:center; background:radial-gradient(circle, #080611 0 8px, var(--pink) 9px 11px, transparent 12px), repeating-radial-gradient(circle, #171027 0 3px, #26163c 4px 6px); border:3px solid var(--line); box-shadow:0 0 26px rgba(255,46,136,.38), inset 0 0 25px rgba(0,0,0,.65); }
+  #disc::before { content:''; position:absolute; inset:15px; border-radius:50%; border:1px solid rgba(51,255,240,.22); }
+  .disc-center { color:var(--cyan); font-size:1.25rem; text-shadow:0 0 9px var(--cyan); }
+  #disc.spinning { animation:discSpin 3s linear infinite; }
+  @keyframes discSpin { from{transform:rotate(0deg)} to{transform:rotate(360deg)} }
+  .music-info { min-width:0; }
+  .music-kicker { font:700 .5rem 'Press Start 2P',monospace; color:var(--cyan); letter-spacing:.08em; margin-bottom:8px; }
+  #nowPlayingLabel { color:var(--text); font-size:1.15rem; font-weight:900; min-height:1.5em; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:13px; text-shadow:0 0 8px rgba(255,255,255,.12); }
+  .visualizer { height:35px; display:flex; align-items:center; gap:4px; margin:2px 0 14px; }
+  .visualizer i { display:block; width:5px; height:8px; border-radius:4px; background:linear-gradient(180deg,var(--cyan),var(--pink)); box-shadow:0 0 7px rgba(51,255,240,.35); animation:eq 1s ease-in-out infinite alternate; animation-play-state:paused; }
+  #disc.spinning ~ * {}
+  #musicPanel:has(#disc.spinning) .visualizer i { animation-play-state:running; }
+  .visualizer i:nth-child(2n){animation-duration:.72s}.visualizer i:nth-child(3n){animation-duration:1.25s}.visualizer i:nth-child(4n){animation-duration:.88s}
+  @keyframes eq { from{height:6px;opacity:.55} to{height:32px;opacity:1} }
+
+  .progress-row { display:flex; align-items:center; gap:9px; }
+  .progress-row span { font:700 .5rem 'Press Start 2P',monospace; color:var(--muted); min-width:31px; }
+  #progressTrack { flex:1; height:9px; background:var(--bg); border:1px solid var(--line); border-radius:99px; overflow:hidden; cursor:pointer; }
+  #progressFill { height:100%; width:0; background:linear-gradient(90deg,var(--pink),var(--cyan)); border-radius:99px; box-shadow:0 0 9px rgba(255,46,136,.55); }
+
+  .music-controls { display:flex; align-items:center; justify-content:center; gap:15px; margin:20px 0 16px; }
+  .music-controls button { width:46px; height:46px; border:2px solid var(--line); border-radius:13px; background:var(--panel); color:var(--text); font-size:1rem; cursor:pointer; box-shadow:0 3px 0 rgba(0,0,0,.4); transition:.15s ease; }
+  .music-controls button:hover { border-color:var(--pink); color:var(--pink); transform:translateY(-2px); box-shadow:0 0 15px rgba(255,46,136,.3); }
+  #playPauseBtn { width:64px; height:64px; border-radius:18px; background:linear-gradient(135deg,var(--pink),#c91f70); color:#21030e; border-color:var(--pink); font-size:1.35rem; box-shadow:0 0 22px rgba(255,46,136,.42),0 4px 0 rgba(0,0,0,.35); }
+
+  .volume-row { display:flex; align-items:center; gap:10px; padding:10px 12px; margin-bottom:18px; border:1px solid var(--line); border-radius:11px; background:rgba(7,6,13,.45); }
+  .volume-icon { color:var(--cyan); font-size:1rem; }
+  #volumeTrack { flex:1; position:relative; height:8px; background:var(--bg); border:1px solid var(--line); border-radius:99px; cursor:pointer; }
+  #volumeFill { position:absolute; inset:0 auto 0 0; width:60%; background:linear-gradient(90deg,var(--pink),var(--cyan)); border-radius:99px; }
+  #volumeHandle { position:absolute; top:50%; left:60%; width:18px; height:18px; transform:translate(-50%,-50%); background:var(--panel); border:2px solid var(--cyan); border-radius:50%; box-shadow:0 0 10px rgba(51,255,240,.45); cursor:grab; }
+  .volume-percent { font:700 .48rem 'Press Start 2P',monospace; color:var(--cyan); min-width:32px; text-align:right; }
+
+  .playlist-header { display:flex; justify-content:space-between; align-items:center; margin-bottom:8px; }
+  .track-list-label { font:700 .55rem 'Press Start 2P',monospace; color:var(--muted); letter-spacing:.08em; }
+  #queueCount { font:700 .48rem 'Press Start 2P',monospace; color:var(--muted); }
+  .track-list { list-style:none; margin:0; padding:0; display:flex; flex-direction:column; gap:7px; }
+  .track-list li button { width:100%; display:flex; align-items:center; gap:11px; text-align:left; background:rgba(7,6,13,.58); border:1px solid var(--line); border-radius:10px; color:var(--text); padding:12px 14px; font-size:.82rem; cursor:pointer; transition:.15s ease; }
+  .track-list li button::before { content:'01'; color:var(--muted); font:700 .5rem 'Press Start 2P',monospace; }
+  .track-list li:nth-child(2) button::before{content:'02'}.track-list li:nth-child(3) button::before{content:'03'}
+  .track-list li button:hover { border-color:var(--cyan); background:rgba(51,255,240,.06); transform:translateX(2px); }
+  .track-list li button.playing { border-color:var(--pink); color:var(--pink); background:rgba(255,46,136,.08); box-shadow:inset 3px 0 0 var(--pink); }
+  .music-footer { display:flex; justify-content:space-between; margin-top:15px; padding-top:12px; border-top:1px dashed var(--line); color:var(--muted); font:700 .43rem 'Press Start 2P',monospace; letter-spacing:.04em; }
+  @media (max-width:600px) { #musicPanel{padding:20px; border-radius:17px} .music-hero{grid-template-columns:1fr;gap:12px;text-align:center} #discWrap{margin:auto} #nowPlayingLabel{font-size:1rem} .music-footer{font-size:.38rem} }
+
+  #settingsBtn .gear-icon {
+    width: 16px;
+    height: 16px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 1.8;
+  }
+
+  #settingsOverlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(5,4,10,0.75);
+    backdrop-filter: blur(2px);
+    z-index: 100;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+
+  #settingsOverlay.open {
+    display: flex;
+  }
+
+  #settingsPanel {
+    width: 100%;
+    max-width: 380px;
+    max-height: 78vh;
+    overflow-y: auto;
+    background: linear-gradient(180deg, var(--panel) 0%, #100c1c 100%);
+    border: 3px solid var(--line);
+    border-radius: 16px;
+    box-shadow:
+      0 0 0 3px rgba(51,255,240,0.10),
+      0 0 40px rgba(51,255,240,0.15),
+      inset 0 0 30px rgba(255,46,136,0.05);
+    padding: 26px 22px 26px;
+    position: relative;
+  }
+
+  #settingsPanel::-webkit-scrollbar {
+    width: 8px;
+  }
+
+  #settingsPanel::-webkit-scrollbar-track {
+    background: transparent;
+  }
+
+  #settingsPanel::-webkit-scrollbar-thumb {
+    background: var(--line);
+    border-radius: 8px;
+  }
+
+  #settingsPanel::before,
+  #settingsPanel::after {
+    content: '';
+    position: absolute;
+    top: 12px;
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: var(--gold);
+    box-shadow: 0 0 8px var(--gold);
+  }
+
+  #settingsPanel::before { left: 16px; }
+  #settingsPanel::after { right: 16px; }
+
+  #settingsPanel h2 {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.85rem;
+    color: var(--cyan);
+    text-shadow: 0 0 8px rgba(51,255,240,0.6);
+    margin: 0 0 20px;
+    text-align: center;
+    letter-spacing: 0.03em;
+  }
+
+  #settingsPanel .field {
+    margin-bottom: 20px;
+  }
+
+  #settingsPanel label {
+    display: block;
+    font-size: 0.68rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--muted);
+    margin-bottom: 8px;
+  }
+
+  #settingsPanel input[type="text"] {
+    width: 100%;
+    background: var(--bg);
+    border: 2px solid var(--line);
+    border-radius: 6px;
+    color: var(--text);
+    padding: 10px 12px;
+    font-family: 'Rubik', sans-serif;
+    font-size: 0.9rem;
+  }
+
+  #settingsPanel input[type="text"]:focus {
+    outline: none;
+    border-color: var(--cyan);
+  }
+
+  .swatch-row {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(0, 1fr));
+    gap: 10px;
+    width: 100%;
+    max-width: 100%;
+    box-sizing: border-box;
+    padding: 4px 2px 8px;
+    overflow: hidden;
+  }
+
+  .swatch {
+    width: 38px;
+    height: 38px;
+    max-width: 100%;
+    justify-self: center;
+    box-sizing: border-box;
+  }
+
+  .settings-choice-row {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  .settings-choice {
+    min-height: 42px;
+    padding: 8px 6px;
+    border: 2px solid var(--line);
+    border-radius: 8px;
+    background: var(--bg);
+    color: var(--muted);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.45rem;
+    line-height: 1.35;
+    cursor: pointer;
+    transition: border-color .15s ease, color .15s ease, transform .1s ease, box-shadow .15s ease;
+  }
+
+  .settings-choice:hover,
+  .settings-choice:focus-visible {
+    border-color: var(--cyan);
+    color: var(--text);
+    outline: none;
+    transform: translateY(-1px);
+  }
+
+  .settings-choice.selected {
+    border-color: var(--cyan);
+    color: var(--cyan);
+    box-shadow: 0 0 10px rgba(51,255,240,.22), inset 0 0 12px rgba(51,255,240,.06);
+  }
+
+  body.no-sound .ui-click-sound {
+    display: none !important;
+  }
+
+  body.contrast-dark {
+    --bg: #02040a;
+    --panel: #060a12;
+  }
+
+  body.contrast-soft {
+    --bg: #0c121c;
+    --panel: #111a27;
+  }
+
+  .equipped-preview {
+    margin-top: 8px;
+    padding: 12px;
+    border: 2px solid var(--line);
+    border-radius: 10px;
+    background: var(--bg);
+    text-align: center;
+  }
+
+  .profile-badge-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 5px;
+  font-size: 0.9rem;
+  line-height: 1;
+  vertical-align: middle;
+  filter: drop-shadow(0 0 5px currentColor);
+}
+
+.equipped-preview-name {
+    font-family: 'Press Start 2P', monospace;
+    font-size: .7rem;
+    line-height: 1.6;
+    word-break: break-word;
+  }
+
+  .equip-grid {
+    display: grid;
+    gap: 8px;
+  }
+
+  .equip-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 9px 10px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: rgba(255,255,255,.02);
+  }
+
+  .equip-row-name {
+    min-width: 0;
+    color: var(--text);
+    font-size: .68rem;
+    font-weight: 700;
+  }
+
+  .equip-row-type {
+    display: block;
+    color: var(--muted);
+    font-size: .56rem;
+    margin-top: 3px;
+    font-weight: 500;
+  }
+
+  .equip-btn {
+    flex: 0 0 auto;
+    padding: 7px 9px;
+    border: 2px solid var(--line);
+    border-radius: 7px;
+    background: var(--panel-hover);
+    color: var(--text);
+    font-family: 'Press Start 2P', monospace;
+    font-size: .45rem;
+    cursor: pointer;
+  }
+
+  .equip-btn:hover:not(:disabled) {
+    border-color: var(--cyan);
+    color: var(--cyan);
+    box-shadow: 0 0 10px rgba(51,255,240,.18);
+  }
+
+  .equip-btn.equipped {
+    border-color: #39ff6a;
+    color: #39ff6a;
+    background: rgba(57,255,106,.07);
+  }
+
+  .equip-empty {
+    color: var(--muted);
+    font-size: .65rem;
+    line-height: 1.5;
+    text-align: center;
+    padding: 10px;
+  }
+
+  .settings-choice-desc {
+    margin-top: 6px;
+    color: var(--muted);
+    font-size: .62rem;
+    line-height: 1.45;
+  }
+
+  body.ui-compact .layout {
+    gap: 24px;
+  }
+
+  body.ui-compact ul.game-list {
+    gap: 12px;
+  }
+
+  body.ui-spacious .layout {
+    gap: 52px;
+  }
+
+  body.ui-spacious ul.game-list {
+    gap: 24px;
+  }
+
+  body.low-glow h1 {
+    text-shadow: 0 0 4px rgba(51,255,240,.45), 0 0 2px #fff;
+  }
+
+  body.low-glow header,
+  body.low-glow .player-frame-wrap,
+  body.low-glow .game-button {
+    box-shadow: 0 4px 0 rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.05);
+  }
+
+  body.high-glow h1 {
+    text-shadow: 0 0 10px rgba(51,255,240,.9), 0 0 28px rgba(51,255,240,.7), 0 0 2px #fff;
+  }
+
+  body.high-glow header {
+    box-shadow:
+      0 0 0 3px rgba(51,255,240,.12),
+      0 0 45px rgba(51,255,240,.24),
+      inset 0 0 40px rgba(255,46,136,.08);
+  }
+
+  body.no-motion *,
+  body.no-motion *::before,
+  body.no-motion *::after {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+
+  @media (max-width: 600px) {
+    .swatch-row {
+      grid-template-columns: repeat(4, minmax(0, 1fr));
+      gap: 9px;
+    }
+
+    .swatch {
+      width: 34px;
+      height: 34px;
+    }
+
+    .settings-choice-row {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  .swatch {
+    width: 34px;
+    height: 34px;
+    border-radius: 6px;
+    border: 3px solid var(--line);
+    cursor: pointer;
+    transition: border-color 0.15s ease, transform 0.1s ease, box-shadow 0.15s ease;
+  }
+
+  .swatch:hover {
+    transform: scale(1.12) rotate(-2deg);
+  }
+
+  .swatch.selected {
+    border-color: #fff;
+    box-shadow: 0 0 12px currentColor, 0 0 2px #fff inset;
+    transform: scale(1.08);
+  }
+
+  .toggle-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+  }
+
+  .toggle-switch {
+    position: relative;
+    width: 46px;
+    height: 24px;
+    background: var(--bg);
+    border: 2px solid var(--line);
+    border-radius: 999px;
+    cursor: pointer;
+  }
+
+  .toggle-switch .knob {
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--muted);
+    transition: left 0.15s ease, background 0.15s ease;
+  }
+
+  .toggle-switch.on {
+    border-color: var(--cyan);
+  }
+
+  .toggle-switch.on .knob {
+    left: 24px;
+    background: var(--cyan);
+    box-shadow: 0 0 8px var(--cyan);
+  }
+
+  #settingsPanel .panel-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 24px;
+  }
+
+  #settingsPanel .panel-buttons button {
+    flex: 1;
+    padding: 12px;
+    border-radius: 8px;
+    border: 2px solid var(--line);
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.62rem;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+    transition: transform 0.1s ease, box-shadow 0.15s ease;
+  }
+
+  #settingsPanel .panel-buttons button:active {
+    transform: translateY(1px);
+  }
+
+  #saveSettingsBtn {
+    background: var(--cyan);
+    color: #04211f;
+    border-color: var(--cyan) !important;
+  }
+
+  #saveSettingsBtn:hover {
+    box-shadow: 0 0 14px rgba(51,255,240,0.5);
+  }
+
+  #closeSettingsBtn {
+    background: var(--panel-hover);
+    color: var(--text);
+  }
+
+  #closeSettingsBtn:hover {
+    border-color: var(--pink) !important;
+  }
+
+  body.no-scanlines::after {
+    display: none;
+  }
+
+  /* ============== REQUIRED LOGIN GATE ============== */
+
+  body.gated .layout,
+  body.gated #settingsBtn {
+    display: none;
+  }
+
+  #authGate {
+    display: none;
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+    background:
+      radial-gradient(circle at 15% 0%, rgba(51,255,240,0.10), transparent 45%),
+      radial-gradient(circle at 85% 15%, rgba(255,46,136,0.10), transparent 45%),
+      var(--bg);
+  }
+
+  body.gated #authGate {
+    display: flex;
+  }
+
+  #authGatePanel {
+    width: 100%;
+    max-width: 360px;
+    background: linear-gradient(180deg, var(--panel) 0%, #100c1c 100%);
+    border: 3px solid var(--line);
+    border-radius: 16px;
+    box-shadow:
+      0 0 0 3px rgba(51,255,240,0.10),
+      0 0 40px rgba(51,255,240,0.15);
+    padding: 28px 24px;
+    text-align: center;
+  }
+
+  #authGatePanel h1 {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 1.1rem;
+    color: var(--cyan);
+    text-shadow: 0 0 8px rgba(51,255,240,0.6);
+    margin: 0 0 8px;
+  }
+
+  #authGatePanel p {
+    color: var(--muted);
+    font-size: 0.85rem;
+    margin: 0 0 20px;
+  }
+
+  #authGatePanel input {
+    width: 100%;
+    background: var(--bg);
+    border: 2px solid var(--line);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 12px;
+    font-size: 0.95rem;
+    margin-bottom: 10px;
+  }
+
+  #authGatePanel input:focus {
+    outline: none;
+    border-color: var(--cyan);
+  }
+
+  #authGatePanel .gate-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 4px;
+  }
+
+  #authGatePanel .gate-buttons button {
+    flex: 1;
+    padding: 12px;
+    border-radius: 8px;
+    border: 2px solid var(--line);
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Rubik', sans-serif;
+  }
+
+  #gateLoginBtn {
+    background: var(--cyan);
+    color: #04211f;
+  }
+
+  #gateSignupBtn {
+    background: var(--panel-hover);
+    color: var(--text);
+  }
+
+  #authGateMessage {
+    margin-top: 14px;
+    font-size: 0.8rem;
+    color: var(--pink);
+    min-height: 1em;
+  }
+
+  @media (max-width: 900px) {
+    ul.game-list {
+      grid-template-columns: repeat(4, 1fr);
+    }
+  }
+
+  @media (max-width: 600px) {
+    ul.game-list {
+      grid-template-columns: repeat(3, 1fr);
+    }
+    h1 {
+      font-size: 1.2rem;
+    }
+  }
+
+  @media (max-width: 400px) {
+    ul.game-list {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+
+  :root {
+    --bg: #0b0e1a;
+    --panel: #141a2e;
+    --bubble-me: #33fff0;
+    --bubble-them: #1c2440;
+    --line: #2a3357;
+    --text: #eef1fa;
+    --muted: #6d7597;
+    --pink: #ff2e88;
+  }
+
+  * { box-sizing: border-box; }
+
+  #aiGame {
+    height: 100%;
+    margin: 0;
+  }
+
+  #aiGame {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Rubik', sans-serif;
+    display: flex;
+    flex-direction: column;
+  }
+
+  #aiGame header {
+    padding: 14px 18px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  #aiGame header .dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: #39ff6a;
+    box-shadow: 0 0 8px #39ff6a;
+    animation: dotPulse 1.6s ease-in-out infinite;
+  }
+
+  @keyframes dotPulse {
+    0%, 100% { box-shadow: 0 0 6px #39ff6a; }
+    50% { box-shadow: 0 0 14px #39ff6a; }
+  }
+
+  #aiGame header h1 {
+    font-family: 'Press Start 2P', monospace;
+    font-size: 0.7rem;
+    margin: 0;
+    color: var(--pink);
+  }
+
+  #aiGame header .status {
+    margin-left: auto;
+    font-size: 0.8rem;
+    color: var(--muted);
+  }
+
+  #aiGame #log {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  #aiGame .msg {
+    max-width: 75%;
+    padding: 10px 14px;
+    border-radius: 14px;
+    font-size: 0.92rem;
+    line-height: 1.4;
+    word-wrap: break-word;
+    white-space: pre-wrap;
+  }
+
+  #aiGame .msg .sender {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 700;
+    margin-bottom: 3px;
+    opacity: 0.75;
+  }
+
+  #aiGame .msg.me {
+    align-self: flex-end;
+    background: var(--bubble-me);
+    color: #04211f;
+    border-bottom-right-radius: 4px;
+  }
+
+  #aiGame .msg.them {
+    align-self: flex-start;
+    background: var(--bubble-them);
+    color: var(--text);
+    border: 1px solid var(--line);
+    border-bottom-left-radius: 4px;
+  }
+
+  #aiGame .msg.typing {
+    color: var(--muted);
+    font-style: italic;
+  }
+
+  #aiGame form {
+    display: flex;
+    gap: 10px;
+    padding: 14px;
+    border-top: 1px solid var(--line);
+    background: var(--panel);
+  }
+
+  #aiGame input[type="text"] {
+    flex: 1;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 12px 14px;
+    font-family: 'Rubik', sans-serif;
+    font-size: 0.95rem;
+  }
+
+  #aiGame input[type="text"]:focus {
+    outline: none;
+    border-color: var(--pink);
+  }
+
+  #aiGame button {
+    background: var(--pink);
+    color: #22030f;
+    border: none;
+    border-radius: 8px;
+    padding: 0 18px;
+    font-weight: 700;
+    cursor: pointer;
+    font-family: 'Rubik', sans-serif;
+  }
+
+  #aiGame button:hover {
+    background: #ff5da3;
+  }
+
+  #aiGame button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  #aiGame .setup-warning {
+    margin: auto;
+    max-width: 440px;
+    text-align: center;
+    padding: 24px;
+    color: var(--muted);
+    font-size: 0.9rem;
+    line-height: 1.6;
+  }
+
+  #aiGame .setup-warning code {
+    background: var(--panel);
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: var(--pink);
+  }
+</style>
+</head>
+<body class="gated">
+
+<div id="authGate">
+  <div id="authGatePanel">
+    <h1>ARCADE GAMES</h1>
+    <p>Sign in or create an account to play.</p>
+    <input type="email" id="gateEmail" placeholder="Email">
+    <input type="password" id="gatePassword" placeholder="Password">
+    <div class="gate-buttons">
+      <button type="button" id="gateLoginBtn">Log In</button>
+      <button type="button" id="gateSignupBtn">Sign Up</button>
+    </div>
+    <div id="authGateMessage"></div>
+  </div>
+</div>
+
+
+<button id="musicBtn" type="button">
+  <span class="note-icon">♪</span>
+  MUSIC
+</button>
+
+<button id="updatesBtn" type="button" aria-label="Open update log">
+  <span>✓</span>
+  UPDATES
+</button>
+
+<button id="shopBtn" type="button" aria-label="Open arcade shop">
+  <span>◆</span>
+  SHOP
+</button>
+
+<div id="shopOverlay" aria-hidden="true">
+  <div id="shopPanel" role="dialog" aria-modal="true" aria-labelledby="shopTitle">
+    <h2 id="shopTitle">ARCADE SHOP</h2>
+    <div class="shop-subtitle">Build up credits, then unlock rare cosmetics, titles, badges, name effects, and exclusive accent colors. Higher-tier items stay locked until you have enough credits.</div>
+
+    <div class="shop-balance">
+      <span class="shop-balance-label">YOUR BALANCE</span>
+      <span id="shopCredits">20 CREDITS</span>
+    </div>
+
+    <div class="shop-section-title">PROFILE COSMETICS</div>
+    <div class="shop-grid">
+      <div class="shop-item" data-shop-id="name-purple"><div class="shop-item-icon">◆</div><div class="shop-item-name">PURPLE NAME</div><div class="shop-item-desc">Turn your name into a purple arcade tag.</div><button class="shop-buy" type="button" data-shop-id="name-purple" data-cost="50">50 CREDITS</button></div>
+      <div class="shop-item" data-shop-id="name-gold"><div class="shop-item-icon">★</div><div class="shop-item-name">GOLD NAME</div><div class="shop-item-desc">Give your name a gold arcade glow.</div><button class="shop-buy" type="button" data-shop-id="name-gold" data-cost="50">50 CREDITS</button></div>
+      <div class="shop-item" data-shop-id="name-pink"><div class="shop-item-icon">♥</div><div class="shop-item-name">PINK NAME</div><div class="shop-item-desc">Make your name pop with a hot-pink tag.</div><button class="shop-buy" type="button" data-shop-id="name-pink" data-cost="50">50 CREDITS</button></div>
+      <div class="shop-item" data-shop-id="name-green"><div class="shop-item-icon">✦</div><div class="shop-item-name">NEON GREEN NAME</div><div class="shop-item-desc">Unlock an electric green player name.</div><button class="shop-buy" type="button" data-shop-id="name-green" data-cost="50">50 CREDITS</button></div>
+      <div class="shop-item" data-shop-id="name-frame"><div class="shop-item-icon">▣</div><div class="shop-item-name">GLOWING NAME FRAME</div><div class="shop-item-desc">A bright frame surrounds your name in AI chat.</div><button class="shop-buy" type="button" data-shop-id="name-frame" data-cost="75">75 CREDITS</button></div>
+      <div class="shop-item" data-shop-id="effect-diamond"><div class="shop-item-icon">◇</div><div class="shop-item-name">DIAMOND NAME</div><div class="shop-item-desc">A shimmering diamond effect for your chat name.</div><button class="shop-buy" type="button" data-shop-id="effect-diamond" data-cost="125">125 CREDITS</button></div>
+      <div class="shop-item" data-shop-id="effect-rainbow"><div class="shop-item-icon">🌈</div><div class="shop-item-name">RAINBOW NAME</div><div class="shop-item-desc">Animated arcade colors cycle across your name.</div><button class="shop-buy" type="button" data-shop-id="effect-rainbow" data-cost="175">175 CREDITS</button></div>
+      <div class="shop-item" data-shop-id="effect-fire"><div class="shop-item-icon">🔥</div><div class="shop-item-name">FIRE NAME</div><div class="shop-item-desc">A fiery glow makes your player tag stand out.</div><button class="shop-buy" type="button" data-shop-id="effect-fire" data-cost="200">200 CREDITS</button></div>
+    </div>
+
+    <div class="shop-section-title">TITLE TAGS</div>
+    <div class="shop-grid">
+      <div class="shop-item" data-shop-id="title-veteran"><div class="shop-item-icon">🕹️</div><div class="shop-item-name">ARCADE VETERAN</div><div class="shop-item-desc">Show the classic veteran title beside your name.</div><button class="shop-buy" type="button" data-shop-id="title-veteran" data-cost="100">100 CREDITS</button></div>
+      <div class="shop-item" data-shop-id="title-champion"><div class="shop-item-icon">🏆</div><div class="shop-item-name">SCORE CHASER</div><div class="shop-item-desc">Wear a title for players who chase high scores.</div><button class="shop-buy" type="button" data-shop-id="title-champion" data-cost="100">100 CREDITS</button></div>
+      <div class="shop-item" data-shop-id="title-pixel"><div class="shop-item-icon">👾</div><div class="shop-item-name">PIXEL PILOT</div><div class="shop-item-desc">A retro title for your arcade profile.</div><button class="shop-buy" type="button" data-shop-id="title-pixel" data-cost="100">100 CREDITS</button></div>
+      <div class="shop-item" data-shop-id="title-master"><div class="shop-item-icon">⚡</div><div class="shop-item-name">ARCADE MASTER</div><div class="shop-item-desc">A premium title reserved for a big credit stash.</div><button class="shop-buy" type="button" data-shop-id="title-master" data-cost="300">300 CREDITS</button></div>
+      <div class="shop-item" data-shop-id="badge-vip"><div class="shop-item-icon">👑</div><div class="shop-item-name">VIP BADGE</div><div class="shop-item-desc">Adds a VIP badge beside your title in chat.</div><button class="shop-buy" type="button" data-shop-id="badge-vip" data-cost="250">250 CREDITS</button></div>
+      <div class="shop-item" data-shop-id="badge-glitch"><div class="shop-item-icon">👾</div><div class="shop-item-name">GLITCH BADGE</div><div class="shop-item-desc">A rare glitch badge for serious arcade collectors.</div><button class="shop-buy" type="button" data-shop-id="badge-glitch" data-cost="400">400 CREDITS</button></div>
+    </div>
+
+    <div class="shop-section-title">EXTRA ACCENT COLORS</div>
+    <div class="shop-grid">
+      <div class="shop-item" data-shop-id="accent-crimson"><div class="shop-item-icon">●</div><div class="shop-item-name">CRIMSON</div><div class="shop-item-desc">Unlock a deep crimson accent in Settings.</div><button class="shop-buy" type="button" data-shop-id="accent-crimson" data-cost="150">150 CREDITS</button></div>
+      <div class="shop-item" data-shop-id="accent-electric"><div class="shop-item-icon">◆</div><div class="shop-item-name">ELECTRIC PURPLE</div><div class="shop-item-desc">Unlock a vivid electric-purple interface accent.</div><button class="shop-buy" type="button" data-shop-id="accent-electric" data-cost="150">150 CREDITS</button></div>
+      <div class="shop-item" data-shop-id="accent-coral"><div class="shop-item-icon">●</div><div class="shop-item-name">CORAL</div><div class="shop-item-desc">Unlock a bright coral arcade accent.</div><button class="shop-buy" type="button" data-shop-id="accent-coral" data-cost="150">150 CREDITS</button></div>
+      <div class="shop-item" data-shop-id="accent-ultraviolet"><div class="shop-item-icon">✦</div><div class="shop-item-name">ULTRAVIOLET</div><div class="shop-item-desc">Unlock a deep ultraviolet accent.</div><button class="shop-buy" type="button" data-shop-id="accent-ultraviolet" data-cost="150">150 CREDITS</button></div>
+      <div class="shop-item" data-shop-id="badge-arcade"><div class="shop-item-icon">🕹️</div><div class="shop-item-name">ARCADE BADGE</div><div class="shop-item-desc">A small diamond badge for your player name.</div><button class="shop-buy" type="button" data-shop-id="badge-arcade" data-cost="75">75 CREDITS</button></div>
+    </div>
+
+    <button type="button" class="shop-close" id="closeShopBtn">CLOSE SHOP</button>
+  </div>
+</div>
+
+<div id="updatesOverlay" aria-hidden="true">
+  <div id="updatesPanel" role="dialog" aria-modal="true" aria-labelledby="updatesTitle">
+    <h2 id="updatesTitle">UPDATE LOG</h2>
+
+    <div class="update-entry">
+      <div class="update-date">LATEST BUILD</div>
+      <div class="update-title">Music Player</div>
+      <div class="update-desc">Click MUSIC in the top-left corner to open the music controls.</div>
+    </div>
+
+    <div class="update-entry">
+      <div class="update-date">LATEST BUILD</div>
+      <div class="update-title">Update Log</div>
+      <div class="update-desc">Click UPDATES at the top of the arcade to view the latest changes.</div>
+    </div>
+
+    <div class="update-entry">
+      <div class="update-date">LATEST BUILD</div>
+      <div class="update-title">Arcade Shop</div>
+      <div class="update-desc">Spend saved credits on name colors, glowing chat frames, profile titles, and extra accent colors.</div>
+    </div>
+
+    <div class="update-entry">
+      <div class="update-date">LATEST BUILD</div>
+      <div class="update-title">Arcade</div>
+      <div class="update-desc">Game loading, settings, accounts, fullscreen controls, and the rest of the arcade remain available.</div>
+    </div>
+
+    <button type="button" class="close-updates" id="closeUpdatesBtn">CLOSE</button>
+  </div>
+</div>
+
+<div id="musicOverlay" aria-hidden="true">
+  <div id="musicPanel" role="dialog" aria-modal="true" aria-labelledby="musicTitle">
+    <button type="button" id="closeMusicBtn" class="music-close" aria-label="Close music player">×</button>
+    <div class="music-topline"><span class="music-live-dot"></span> ARCADE RADIO <span class="music-wave">LIVE</span></div>
+    <h2 id="musicTitle">MUSIC // PLAYER</h2>
+
+    <div class="music-hero">
+      <div id="discWrap">
+        <div class="disc-glow"></div>
+        <div id="disc"><span class="disc-center">♫</span></div>
+      </div>
+      <div class="music-info">
+        <div class="music-kicker">NOW PLAYING</div>
+        <div id="nowPlayingLabel">No track selected</div>
+        <div class="visualizer" aria-hidden="true">
+          <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+        </div>
+        <div class="progress-row">
+          <span id="currentTimeLabel">0:00</span>
+          <div id="progressTrack">
+            <div id="progressFill"></div>
+          </div>
+          <span id="durationLabel">0:00</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="music-controls">
+      <button type="button" id="prevTrackBtn" aria-label="Previous track">⏮</button>
+      <button type="button" id="playPauseBtn" aria-label="Play or pause">▶</button>
+      <button type="button" id="nextTrackBtn" aria-label="Next track">⏭</button>
+    </div>
+
+    <div class="volume-row">
+      <span class="volume-icon">◖</span>
+      <div id="volumeTrack">
+        <div id="volumeFill"></div>
+        <div id="volumeHandle"></div>
+      </div>
+      <span class="volume-percent" id="volumePercent">60%</span>
+    </div>
+
+    <div class="playlist-header"><span class="track-list-label">QUEUE</span><span id="queueCount">03 TRACKS</span></div>
+    <ul class="track-list" id="trackList"></ul>
+    <div class="music-footer"><span>♪ STUDY HALL FM</span><span>ESC TO CLOSE</span></div>
+  </div>
+</div>
+
+<button id="settingsBtn" type="button">
+  <svg class="gear-icon" viewBox="0 0 24 24">
+    <circle cx="12" cy="12" r="3"/>
+    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/>
+  </svg>
+  SETTINGS
+</button>
+
+<div id="settingsOverlay">
+  <div id="settingsPanel">
+    <h2>OPTIONS</h2>
+
+    <div class="field" id="accountSection">
+      <label>Account</label>
+      <div id="loggedOutView">
+        <input type="text" id="authEmail" placeholder="Email" style="margin-bottom:8px;">
+        <input type="password" id="authPassword" placeholder="Password" style="margin-bottom:8px;">
+        <div style="display:flex; gap:8px;">
+          <button type="button" id="loginBtn" style="flex:1; padding:10px; border-radius:6px; border:2px solid var(--line); background:var(--cyan); color:#04211f; font-weight:700; cursor:pointer;">Log In</button>
+          <button type="button" id="signupBtn" style="flex:1; padding:10px; border-radius:6px; border:2px solid var(--line); background:var(--panel-hover); color:var(--text); font-weight:700; cursor:pointer;">Sign Up</button>
+        </div>
+        <div id="authMessage" style="font-size:0.75rem; color:var(--muted); margin-top:8px; text-align:center;"></div>
+      </div>
+      <div id="loggedInView" style="display:none;">
+        <div style="font-size:0.85rem; color:var(--text); margin-bottom:8px;">
+          Logged in as <strong id="loggedInEmail"></strong>
+        </div>
+        <button type="button" id="logoutBtn" style="width:100%; padding:10px; border-radius:6px; border:2px solid var(--line); background:var(--panel-hover); color:var(--text); font-weight:700; cursor:pointer;">Log Out</button>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Credits Remaining</label>
+      <div style="font-family:'Press Start 2P', monospace; font-size:1.4rem; color:var(--gold); text-shadow:0 0 8px rgba(255,207,77,0.6); text-align:center; padding:8px 0;">
+        <span id="creditsDisplay">20</span>
+      </div>
+    </div>
+
+    <div class="field">
+      <label for="playerNameInput">Player Name</label>
+      <input type="text" id="playerNameInput" placeholder="You" maxlength="16">
+    </div>
+
+    <div class="field">
+      <label>Accent Color</label>
+      <div class="swatch-row" id="swatchRow">
+        <button type="button" class="swatch selected" data-color="#33fff0" style="background:#33fff0; color:#33fff0;" aria-label="CYAN" title="CYAN"></button>
+        <button type="button" class="swatch" data-color="#ff2e88" style="background:#ff2e88; color:#ff2e88;" aria-label="PINK" title="PINK"></button>
+        <button type="button" class="swatch" data-color="#ffcf4d" style="background:#ffcf4d; color:#ffcf4d;" aria-label="GOLD" title="GOLD"></button>
+        <button type="button" class="swatch" data-color="#7dff5a" style="background:#7dff5a; color:#7dff5a;" aria-label="LIME" title="LIME"></button>
+        <button type="button" class="swatch" data-color="#b070ff" style="background:#b070ff; color:#b070ff;" aria-label="PURPLE" title="PURPLE"></button>
+        <button type="button" class="swatch" data-color="#ff7a3d" style="background:#ff7a3d; color:#ff7a3d;" aria-label="ORANGE" title="ORANGE"></button>
+        <button type="button" class="swatch" data-color="#ff4d4d" style="background:#ff4d4d; color:#ff4d4d;" aria-label="RED" title="RED"></button>
+        <button type="button" class="swatch" data-color="#4d8fff" style="background:#4d8fff; color:#4d8fff;" aria-label="BLUE" title="BLUE"></button>
+        <button type="button" class="swatch" data-color="#00e5ff" style="background:#00e5ff; color:#00e5ff;" aria-label="SKY" title="SKY"></button>
+        <button type="button" class="swatch" data-color="#00ff9d" style="background:#00ff9d; color:#00ff9d;" aria-label="MINT" title="MINT"></button>
+        <button type="button" class="swatch" data-color="#ff4fd8" style="background:#ff4fd8; color:#ff4fd8;" aria-label="MAGENTA" title="MAGENTA"></button>
+        <button type="button" class="swatch" data-color="#a6ff00" style="background:#a6ff00; color:#a6ff00;" aria-label="ACID" title="ACID"></button>
+        <button type="button" class="swatch" data-color="#8c7bff" style="background:#8c7bff; color:#8c7bff;" aria-label="VIOLET" title="VIOLET"></button>
+        <button type="button" class="swatch" data-color="#ff8c42" style="background:#ff8c42; color:#ff8c42;" aria-label="SUNSET" title="SUNSET"></button>
+        <button type="button" class="swatch" data-color="#f7f7ff" style="background:#f7f7ff; color:#f7f7ff;" aria-label="WHITE" title="WHITE"></button>
+        <button type="button" class="swatch" data-color="#7df9ff" style="background:#7df9ff; color:#7df9ff;" aria-label="ICE" title="ICE"></button>
+        <button type="button" class="swatch" data-color="#ff6b9d" style="background:#ff6b9d; color:#ff6b9d;" aria-label="ROSE" title="ROSE"></button>
+        <button type="button" class="swatch" data-color="#c084fc" style="background:#c084fc; color:#c084fc;" aria-label="LAVENDER" title="LAVENDER"></button>
+        <button type="button" class="swatch" data-color="#39ff14" style="background:#39ff14; color:#39ff14;" aria-label="NEON GREEN" title="NEON GREEN"></button>
+        <button type="button" class="swatch" data-color="#ffd166" style="background:#ffd166; color:#ffd166;" aria-label="LEMON" title="LEMON"></button>
+      </div>
+    </div>
+
+    <div class="field">
+      <div class="toggle-row">
+        <label style="margin-bottom:0;">CRT Scanlines</label>
+        <div class="toggle-switch on" id="scanlineToggle">
+          <div class="knob"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Neon Glow</label>
+      <div class="settings-choice-row" id="glowChoices">
+        <button type="button" class="settings-choice" data-glow="low">LOW</button>
+        <button type="button" class="settings-choice selected" data-glow="normal">NORMAL</button>
+        <button type="button" class="settings-choice" data-glow="high">HIGH</button>
+      </div>
+      <div class="settings-choice-desc">Control how bright the arcade neon effects look.</div>
+    </div>
+
+    <div class="field">
+      <label>Interface Spacing</label>
+      <div class="settings-choice-row" id="spacingChoices">
+        <button type="button" class="settings-choice" data-spacing="compact">COMPACT</button>
+        <button type="button" class="settings-choice selected" data-spacing="normal">NORMAL</button>
+        <button type="button" class="settings-choice" data-spacing="spacious">SPACIOUS</button>
+      </div>
+      <div class="settings-choice-desc">Change the amount of space between the arcade sections.</div>
+    </div>
+
+    <div class="field">
+      <label>Arcade Motion</label>
+      <div class="toggle-row">
+        <div>
+          <div style="font-size:.72rem; font-weight:700; color:var(--text);">Animations</div>
+          <div style="font-size:.62rem; color:var(--muted); margin-top:4px;">Flicker, glow pulses, and button motion.</div>
+        </div>
+        <div class="toggle-switch on" id="motionToggle" role="switch" aria-checked="true" tabindex="0">
+          <div class="knob"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Arcade Sound</label>
+      <div class="toggle-row">
+        <div>
+          <div style="font-size:.72rem; font-weight:700; color:var(--text);">UI Sound Effects</div>
+          <div style="font-size:.62rem; color:var(--muted); margin-top:4px;">Click and interface sounds.</div>
+        </div>
+        <div class="toggle-switch on" id="soundToggle" role="switch" aria-checked="true" tabindex="0">
+          <div class="knob"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="field">
+      <label>Background Contrast</label>
+      <div class="settings-choice-row" id="contrastChoices">
+        <button type="button" class="settings-choice selected" data-contrast="normal">NORMAL</button>
+        <button type="button" class="settings-choice" data-contrast="dark">DARK</button>
+        <button type="button" class="settings-choice" data-contrast="soft">SOFT</button>
+      </div>
+      <div class="settings-choice-desc">Change how deep or soft the arcade background feels.</div>
+    </div>
+
+    <div class="field">
+      <label>Equipped Cosmetics</label>
+      <div class="equipped-preview">
+        <div class="equipped-preview-name" id="equippedPreviewName">You</div>
+        <div id="equippedPreviewMeta" style="font-size:.58rem;color:var(--muted);margin-top:6px;">No cosmetics equipped</div>
+      </div>
+      <div class="equip-grid" id="equipGrid" style="margin-top:10px;"></div>
+    </div>
+
+    <div class="panel-buttons">
+      <button type="button" id="closeSettingsBtn">Cancel</button>
+      <button type="button" id="saveSettingsBtn">Save</button>
+    </div>
+  </div>
+</div>
+
+<div class="layout">
+  <header>
+    <h1>ARCADE GAMES</h1>
+    <p class="subtitle">Have Fun, More Games Out Soon</p>
+  </header>
+
+  <div class="favorites-section" id="favoritesSection">
+    <h2>★ FAVORITES</h2>
+    <ul class="favorites-list" id="favoritesList"></ul>
+  </div>
+
+
+  <div class="game-search" role="search">
+    <span class="game-search-icon">⌕</span>
+    <input type="search" id="gameSearch" placeholder="Search games..." aria-label="Search games" autocomplete="off" spellcheck="false">
+    <span class="search-status" id="searchStatus">50 GAMES</span>
+  </div>
+
+  <ul class="game-list" id="gameList"></ul>
+  <div class="no-search-results" id="noSearchResults" hidden>No games found. Try another search.</div>
+
+  <div class="player">
+    <div class="player-label">NOW PLAYING</div>
+    <div class="player-frame-wrap" id="playerFrameWrap">
+      <p class="placeholder" id="placeholder">Select a slot above to start playing</p>
+    </div>
+    <div class="player-controls" id="playerControls">
+      <button type="button" id="expandGameBtn" class="expand-game-btn" aria-label="Expand game to full screen" aria-pressed="false">
+        <span class="expand-icon">⛶</span>
+        <span id="expandGameText">EXPAND GAME</span>
+      </button>
+      <span class="expand-hint">ESC TO EXIT</span>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+  // ============== SETTINGS PANEL + ACCOUNTS ==============
+  // Supabase is optional at runtime: if the SDK/project is unavailable,
+  // the arcade stays usable in guest mode instead of getting stuck.
+  const SUPABASE_URL = "https://oyzhwiufptwdtthjlagd.supabase.co";
+  const SUPABASE_ANON_KEY = "sb_publishable_QzadsJMfQQOVdm4Jr6b02Q_bxpJwykn";
+  const supabaseSdkAvailable = !!(
+    window.supabase && typeof window.supabase.createClient === 'function'
+  );
+  const authIsConfigured = SUPABASE_URL !== "YOUR_SUPABASE_URL" && !!SUPABASE_ANON_KEY;
+  const supabaseClient = authIsConfigured && supabaseSdkAvailable
+    ? window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY)
+    : null;
+
+  let currentUser = null;
+  let authServiceOffline = !supabaseClient;
+  let profileSaveTimer = null;
+
+
+  const SHOP_KEY_PREFIX = 'arcade_shop_v1_';
+  const SHOP_ACCENT_COLORS = {
+    'accent-crimson': { name: 'CRIMSON', color: '#e11d48' },
+    'accent-electric': { name: 'ELECTRIC PURPLE', color: '#8b5cf6' },
+    'accent-coral': { name: 'CORAL', color: '#fb7185' },
+    'accent-ultraviolet': { name: 'ULTRAVIOLET', color: '#7c3aed' }
+  };
+
+  const DEFAULT_COSMETICS = {
+    owned: [],
+    nameColor: null,
+    nameFrame: false,
+    title: null,
+    nameEffect: null,
+    chatBadge: null
+  };
+
+  function shopStorageKey() {
+    return SHOP_KEY_PREFIX + (currentUser?.id || 'guest');
+  }
+
+  function readShopData() {
+    try {
+      const raw = localStorage.getItem(shopStorageKey());
+      const parsed = raw ? JSON.parse(raw) : {};
+      return {
+        owned: Array.isArray(parsed.owned) ? [...new Set(parsed.owned)] : [],
+        nameColor: typeof parsed.nameColor === 'string' ? parsed.nameColor : null,
+        nameFrame: parsed.nameFrame === true,
+        title: typeof parsed.title === 'string' ? parsed.title : null,
+        nameEffect: typeof parsed.nameEffect === 'string' ? parsed.nameEffect : null,
+        chatBadge: typeof parsed.chatBadge === 'string' ? parsed.chatBadge : null
+      };
+    } catch (_) {
+      return { ...DEFAULT_COSMETICS, owned: [] };
+    }
+  }
+
+  let shopData = { ...DEFAULT_COSMETICS, owned: [] };
+
+  function saveShopData() {
+    try {
+      localStorage.setItem(shopStorageKey(), JSON.stringify(shopData));
+    } catch (_) {}
+  }
+
+  function getActiveTitle() {
+    const titles = {
+      'title-veteran': '🕹️ Arcade Veteran',
+      'title-champion': '🏆 Score Chaser',
+      'title-pixel': '👾 Pixel Pilot',
+      'title-master': '⚡ Arcade Master'
+    };
+    return titles[shopData.title] || '';
+  }
+
+  function getNameColor() {
+    const colors = {
+      'name-purple': '#b070ff',
+      'name-gold': '#ffcf4d',
+      'name-pink': '#ff2e88',
+      'name-green': '#39ff14'
+    };
+    return colors[shopData.nameColor] || 'var(--text)';
+  }
+
+  function getNameEffectClass() {
+    return ({
+      'effect-rainbow': 'shop-rainbow-name',
+      'effect-diamond': 'shop-diamond-name',
+      'effect-fire': 'shop-fire-name'
+    })[shopData.nameEffect] || '';
+  }
+
+  function getChatBadge() {
+    return ({
+      'badge-arcade': '🕹️',
+      'badge-vip': '👑',
+      'badge-glitch': '👾'
+    })[shopData.chatBadge] || '';
+  }
+
+  const SHOP_EQUIP_ITEMS = [
+    { id: 'name-purple', label: 'Purple Username', type: 'Username color' },
+    { id: 'name-gold', label: 'Gold Username', type: 'Username color' },
+    { id: 'name-pink', label: 'Pink Username', type: 'Username color' },
+    { id: 'name-green', label: 'Neon Green Username', type: 'Username color' },
+    { id: 'name-frame', label: 'Glowing Name Frame', type: 'Name frame' },
+    { id: 'effect-diamond', label: 'Diamond Name', type: 'Name effect' },
+    { id: 'effect-rainbow', label: 'Rainbow Name', type: 'Name effect' },
+    { id: 'effect-fire', label: 'Fire Name', type: 'Name effect' },
+    { id: 'title-veteran', label: '🕹️ Arcade Veteran', type: 'Title' },
+    { id: 'title-champion', label: '🏆 Score Chaser', type: 'Title' },
+    { id: 'title-pixel', label: '👾 Pixel Pilot', type: 'Title' },
+    { id: 'title-master', label: '⚡ Arcade Master', type: 'Title' },
+    { id: 'badge-arcade', label: '◆ Arcade Badge', type: 'Badge' },
+    { id: 'badge-vip', label: 'VIP Badge', type: 'Badge' },
+    { id: 'badge-glitch', label: 'GLITCH Badge', type: 'Badge' }
+  ];
+
+  function equipShopItem(id) {
+    if (!shopData.owned.includes(id)) return;
+
+    if (id.startsWith('name-') && id !== 'name-frame') {
+      shopData.nameColor = id;
+    } else if (id === 'name-frame') {
+      shopData.nameFrame = !shopData.nameFrame;
+    } else if (id.startsWith('effect-')) {
+      shopData.nameEffect = shopData.nameEffect === id ? null : id;
+    } else if (id.startsWith('title-')) {
+      shopData.title = shopData.title === id ? null : id;
+    } else if (id.startsWith('badge-')) {
+      shopData.chatBadge = shopData.chatBadge === id ? null : id;
+    }
+
+    saveShopData();
+    renderEquippedCosmetics();
+  }
+
+  function isShopItemEquipped(id) {
+    if (id.startsWith('name-') && id !== 'name-frame') return shopData.nameColor === id;
+    if (id === 'name-frame') return shopData.nameFrame === true;
+    if (id.startsWith('effect-')) return shopData.nameEffect === id;
+    if (id.startsWith('title-')) return shopData.title === id;
+    if (id.startsWith('badge-')) return shopData.chatBadge === id;
+    return false;
+  }
+
+  function renderEquippedCosmetics() {
+    if (!equipGrid) return;
+    const owned = SHOP_EQUIP_ITEMS.filter(item => shopData.owned.includes(item.id));
+    equipGrid.innerHTML = '';
+
+    if (!owned.length) {
+      equipGrid.innerHTML = '<div class="equip-empty">Buy a cosmetic in the Shop first, then come back here to equip it.</div>';
+    } else {
+      owned.forEach(item => {
+        const row = document.createElement('div');
+        row.className = 'equip-row';
+        const info = document.createElement('div');
+        info.className = 'equip-row-name';
+        info.innerHTML = `${item.label}<span class="equip-row-type">${item.type}</span>`;
+        const button = document.createElement('button');
+        button.type = 'button';
+        button.className = 'equip-btn' + (isShopItemEquipped(item.id) ? ' equipped' : '');
+        button.textContent = isShopItemEquipped(item.id) ? 'EQUIPPED' : 'EQUIP';
+        button.addEventListener('click', () => equipShopItem(item.id));
+        row.append(info, button);
+        equipGrid.appendChild(row);
+      });
+    }
+
+    if (equippedPreviewName) {
+      equippedPreviewName.textContent = window.arcadeSettings.displayName || 'You';
+      equippedPreviewName.style.color = getNameColor();
+      equippedPreviewName.className = 'equipped-preview-name';
+      const effect = getNameEffectClass();
+      if (effect) equippedPreviewName.classList.add(effect);
+      if (shopData.nameFrame) {
+        equippedPreviewName.style.display = 'inline-block';
+        equippedPreviewName.style.padding = '3px 8px';
+        equippedPreviewName.style.border = '1px solid ' + getNameColor();
+        equippedPreviewName.style.borderRadius = '7px';
+        equippedPreviewName.style.boxShadow = '0 0 9px ' + getNameColor();
+      }
+    }
+
+    if (equippedPreviewMeta) {
+      const parts = [];
+      const previewBadge = getChatBadge();
+      if (previewBadge) parts.push(previewBadge + ' Badge');
+      if (shopData.nameColor) parts.push(shopData.nameColor.replace('name-', '').toUpperCase() + ' NAME');
+      if (shopData.nameEffect) parts.push(shopData.nameEffect.replace('effect-', '').toUpperCase() + ' EFFECT');
+      if (shopData.nameFrame) parts.push('FRAME');
+      if (getActiveTitle()) parts.push(getActiveTitle());
+      if (getChatBadge()) parts.push(getChatBadge() + ' BADGE');
+      equippedPreviewMeta.textContent = parts.length ? 'EQUIPPED: ' + parts.join(' • ') : 'No cosmetics equipped';
+    }
+  }
+
+  function applyOwnedAccentColors() {
+    const ownedAccents = Object.keys(SHOP_ACCENT_COLORS).filter(id => shopData.owned.includes(id));
+    ownedAccents.forEach(id => {
+      if (swatchRow.querySelector(`[data-shop-accent="${id}"]`)) return;
+      const item = SHOP_ACCENT_COLORS[id];
+      const swatch = document.createElement('button');
+      swatch.type = 'button';
+      swatch.className = 'swatch';
+      swatch.dataset.color = item.color;
+      swatch.dataset.shopAccent = id;
+      swatch.style.background = item.color;
+      swatch.style.color = item.color;
+      swatch.setAttribute('aria-label', item.name + ' (SHOP)');
+      swatch.title = item.name + ' (SHOP)';
+      swatchRow.appendChild(swatch);
+    });
+    swatchRow.querySelectorAll('.swatch').forEach(s => {
+      s.classList.toggle('selected', s.dataset.color === window.arcadeSettings.accent);
+    });
+  }
+
+  function updateShopUI() {
+    const balance = Math.max(0, Number(window.arcadeSettings.credits) || 0);
+    const shopCredits = document.getElementById('shopCredits');
+    if (shopCredits) shopCredits.textContent = `${balance} ${balance === 1 ? 'CREDIT' : 'CREDITS'}`;
+
+    renderEquippedCosmetics();
+
+    document.querySelectorAll('.shop-buy').forEach(btn => {
+      const id = btn.dataset.shopId;
+      const owned = shopData.owned.includes(id);
+      const cost = Number(btn.dataset.cost) || 0;
+      const affordable = balance >= cost;
+      btn.disabled = owned || !affordable;
+      btn.classList.toggle('owned', owned);
+      btn.classList.toggle('locked', !owned && !affordable);
+      btn.textContent = owned ? 'OWNED' : (affordable ? `${cost} CREDITS` : `🔒 NEED ${cost - balance} MORE`);
+      const card = btn.closest('.shop-item');
+      if (card) card.classList.toggle('owned', owned);
+    });
+  }
+
+  function loadShopData() {
+    shopData = readShopData();
+    applyOwnedAccentColors();
+    updateShopUI();
+  }
+
+  function purchaseShopItem(id, cost) {
+    if (shopData.owned.includes(id)) return;
+    const balance = Number(window.arcadeSettings.credits) || 0;
+    if (balance < cost) {
+      updateShopUI();
+      return;
+    }
+
+    const newBalance = balance - cost;
+    shopData.owned = [...new Set([...shopData.owned, id])];
+
+    saveShopData();
+    if (window.persistCredits) window.persistCredits(newBalance);
+    else window.arcadeSettings.credits = newBalance;
+
+    if (id.startsWith('accent-')) applyOwnedAccentColors();
+    updateShopUI();
+  }
+
+  const DEFAULT_SETTINGS = {
+    displayName: 'You',
+    accent: '#33fff0',
+    scanlines: true,
+    credits: 20,
+    favorites: []
+  };
+
+  // Guest defaults, used until (or unless) someone logs in.
+  window.arcadeSettings = { ...DEFAULT_SETTINGS, favorites: [] };
+
+  const settingsBtn = document.getElementById('settingsBtn');
+  const settingsOverlay = document.getElementById('settingsOverlay');
+  const closeSettingsBtn = document.getElementById('closeSettingsBtn');
+  const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+  const playerNameInput = document.getElementById('playerNameInput');
+  const swatchRow = document.getElementById('swatchRow');
+  const scanlineToggle = document.getElementById('scanlineToggle');
+  const glowChoices = document.getElementById('glowChoices');
+  const spacingChoices = document.getElementById('spacingChoices');
+  const motionToggle = document.getElementById('motionToggle');
+  const soundToggle = document.getElementById('soundToggle');
+  const contrastChoices = document.getElementById('contrastChoices');
+  const loggedOutView = document.getElementById('loggedOutView');
+  const loggedInView = document.getElementById('loggedInView');
+  const loggedInEmail = document.getElementById('loggedInEmail');
+  const authEmail = document.getElementById('authEmail');
+  const authPassword = document.getElementById('authPassword');
+  const authMessage = document.getElementById('authMessage');
+  const loginBtn = document.getElementById('loginBtn');
+  const signupBtn = document.getElementById('signupBtn');
+  const logoutBtn = document.getElementById('logoutBtn');
+  const equipGrid = document.getElementById('equipGrid');
+  const equippedPreviewName = document.getElementById('equippedPreviewName');
+  const equippedPreviewMeta = document.getElementById('equippedPreviewMeta');
+
+  const gateEmail = document.getElementById('gateEmail');
+  const gatePassword = document.getElementById('gatePassword');
+  const gateMessage = document.getElementById('authGateMessage');
+  const gateLoginBtn = document.getElementById('gateLoginBtn');
+  const gateSignupBtn = document.getElementById('gateSignupBtn');
+
+  const EXTRA_SETTINGS_KEY = 'arcade_extra_settings_v1';
+  const DEFAULT_EXTRA_SETTINGS = {
+    glow: 'normal',
+    spacing: 'normal',
+    motion: true,
+    sound: true,
+    contrast: 'normal'
+  };
+
+  function readExtraSettings() {
+    try {
+      const raw = localStorage.getItem(EXTRA_SETTINGS_KEY);
+      const parsed = raw ? JSON.parse(raw) : {};
+      return {
+        glow: ['low', 'normal', 'high'].includes(parsed.glow) ? parsed.glow : DEFAULT_EXTRA_SETTINGS.glow,
+        spacing: ['compact', 'normal', 'spacious'].includes(parsed.spacing) ? parsed.spacing : DEFAULT_EXTRA_SETTINGS.spacing,
+        motion: typeof parsed.motion === 'boolean' ? parsed.motion : DEFAULT_EXTRA_SETTINGS.motion,
+        sound: typeof parsed.sound === 'boolean' ? parsed.sound : DEFAULT_EXTRA_SETTINGS.sound,
+        contrast: ['normal', 'dark', 'soft'].includes(parsed.contrast) ? parsed.contrast : DEFAULT_EXTRA_SETTINGS.contrast
+      };
+    } catch (_) {
+      return { ...DEFAULT_EXTRA_SETTINGS };
+    }
+  }
+
+  function writeExtraSettings(settings) {
+    try {
+      localStorage.setItem(EXTRA_SETTINGS_KEY, JSON.stringify(settings));
+    } catch (_) {}
+  }
+
+  function applyExtraSettings(settings) {
+    const safe = {
+      ...DEFAULT_EXTRA_SETTINGS,
+      ...(settings || {})
+    };
+
+    document.body.classList.toggle('low-glow', safe.glow === 'low');
+    document.body.classList.toggle('high-glow', safe.glow === 'high');
+    document.body.classList.toggle('ui-compact', safe.spacing === 'compact');
+    document.body.classList.toggle('ui-spacious', safe.spacing === 'spacious');
+    document.body.classList.toggle('no-motion', !safe.motion);
+    document.body.classList.toggle('no-sound', !safe.sound);
+    document.body.classList.toggle('contrast-dark', safe.contrast === 'dark');
+    document.body.classList.toggle('contrast-soft', safe.contrast === 'soft');
+
+    glowChoices.querySelectorAll('.settings-choice').forEach(btn => {
+      btn.classList.toggle('selected', btn.dataset.glow === safe.glow);
+    });
+    spacingChoices.querySelectorAll('.settings-choice').forEach(btn => {
+      btn.classList.toggle('selected', btn.dataset.spacing === safe.spacing);
+    });
+    motionToggle.classList.toggle('on', safe.motion);
+    motionToggle.setAttribute('aria-checked', String(safe.motion));
+    soundToggle.classList.toggle('on', safe.sound);
+    soundToggle.setAttribute('aria-checked', String(safe.sound));
+
+    contrastChoices.querySelectorAll('.settings-choice').forEach(btn => {
+      btn.classList.toggle('selected', btn.dataset.contrast === safe.contrast);
+    });
+  }
+
+  let extraSettings = readExtraSettings();
+  applyExtraSettings(extraSettings);
+
+  function cloneDefaults() {
+    return { ...DEFAULT_SETTINGS, favorites: [] };
+  }
+
+  function profileCacheKey(userId) {
+    return 'arcade_profile_' + userId;
+  }
+
+  function pendingProfileKey(userId) {
+    return 'arcade_profile_pending_' + userId;
+  }
+
+  function readLocalProfile(userId) {
+    try {
+      const raw = localStorage.getItem(profileCacheKey(userId));
+      return raw ? JSON.parse(raw) : null;
+    } catch (_) {
+      return null;
+    }
+  }
+
+  function writeLocalProfile(userId, settings) {
+    try {
+      localStorage.setItem(profileCacheKey(userId), JSON.stringify(settings));
+    } catch (_) {
+      // Storage can be disabled/full. The in-memory settings still work.
+    }
+  }
+
+  function readPendingPatch(userId) {
+    try {
+      const raw = localStorage.getItem(pendingProfileKey(userId));
+      return raw ? JSON.parse(raw) : {};
+    } catch (_) {
+      return {};
+    }
+  }
+
+  function writePendingPatch(userId, patch) {
+    try {
+      localStorage.setItem(pendingProfileKey(userId), JSON.stringify(patch));
+    } catch (_) {}
+  }
+
+  function clearPendingPatch(userId) {
+    try {
+      localStorage.removeItem(pendingProfileKey(userId));
+    } catch (_) {}
+  }
+
+  function applyProfileData(data) {
+    window.arcadeSettings = {
+      displayName: data?.display_name || DEFAULT_SETTINGS.displayName,
+      accent: data?.accent || DEFAULT_SETTINGS.accent,
+      scanlines: typeof data?.scanlines === 'boolean' ? data.scanlines : DEFAULT_SETTINGS.scanlines,
+      credits: Number.isFinite(Number(data?.credits)) ? Number(data.credits) : DEFAULT_SETTINGS.credits,
+      favorites: Array.isArray(data?.favorites) ? data.favorites : DEFAULT_SETTINGS.favorites
+    };
+    applySettingsToUI();
+    if (window.renderFavorites) window.renderFavorites();
+  }
+
+  function applySettingsToUI() {
+    swatchRow.querySelectorAll('.swatch').forEach(s => {
+      s.classList.toggle('selected', s.dataset.color === window.arcadeSettings.accent);
+    });
+    document.documentElement.style.setProperty('--cyan', window.arcadeSettings.accent);
+    scanlineToggle.classList.toggle('on', window.arcadeSettings.scanlines);
+    document.body.classList.toggle('no-scanlines', !window.arcadeSettings.scanlines);
+    updateCreditsDisplay();
+    applyOwnedAccentColors();
+    updateShopUI();
+  }
+
+  function isNetworkError(error) {
+    if (!error) return false;
+    const status = Number(error.status || error.statusCode || 0);
+    const message = String(error.message || error.name || '').toLowerCase();
+    return !navigator.onLine ||
+      status === 0 || status === 502 || status === 503 || status === 504 ||
+      /failed to fetch|network|offline|timeout|timed out|fetch failed|dns|refused|unreachable/.test(message);
+  }
+
+  function withTimeout(promise, ms = 8000) {
+    return Promise.race([
+      promise,
+      new Promise(resolve => setTimeout(() => resolve({
+        data: null,
+        error: { message: 'Supabase request timed out.', status: 0 }
+      }), ms))
+    ]);
+  }
+
+  function setAuthMessage(message, gateOnly = false) {
+    if (!gateOnly && authMessage) authMessage.textContent = message || '';
+    if (gateMessage) gateMessage.textContent = message || '';
+  }
+
+  function enterGuestMode(message) {
+    currentUser = null;
+    loadShopData();
+    loggedOutView.style.display = 'block';
+    loggedInView.style.display = 'none';
+    document.body.classList.remove('gated');
+    window.arcadeSettings = cloneDefaults();
+    applySettingsToUI();
+    if (message) setAuthMessage(message);
+  }
+
+  function showLoggedIn(user) {
+    currentUser = user;
+    loadShopData();
+    loggedOutView.style.display = 'none';
+    loggedInView.style.display = 'block';
+    loggedInEmail.textContent = user.email || 'Signed in';
+    document.body.classList.remove('gated');
+  }
+
+  function showLoggedOut() {
+    currentUser = null;
+    loadShopData();
+    loggedOutView.style.display = 'block';
+    loggedInView.style.display = 'none';
+    window.arcadeSettings = cloneDefaults();
+    applySettingsToUI();
+    if (window.renderFavorites) window.renderFavorites();
+    document.body.classList.add('gated');
+  }
+
+  function markSupabaseOffline(message = 'Account service is offline. You can keep using the site as a guest.') {
+    authServiceOffline = true;
+    enterGuestMode(message);
+  }
+
+  async function loadProfile(user) {
+    if (!user) return false;
+
+    // Always have a local fallback so a database outage cannot blank the UI.
+    const cached = readLocalProfile(user.id);
+    if (cached) applyProfileData(cached);
+
+    if (!supabaseClient || authServiceOffline) {
+      if (!cached) applyProfileData(cloneDefaults());
+      return false;
+    }
+
+    try {
+      const result = await withTimeout(
+        supabaseClient.from('profiles').select('*').eq('id', user.id).maybeSingle()
+      );
+      const { data, error } = result;
+
+      if (error) {
+        if (isNetworkError(error)) {
+          if (!cached) applyProfileData(cloneDefaults());
+          markSupabaseOffline('Supabase is temporarily unavailable. Your site is still usable, and your profile changes will be kept locally.');
+          return false;
+        }
+        authMessage.textContent = 'Could not load your profile: ' + error.message;
+        if (!cached) applyProfileData(cloneDefaults());
+        return false;
+      }
+
+      if (!data) {
+        const defaults = {
+          id: user.id,
+          display_name: DEFAULT_SETTINGS.displayName,
+          accent: DEFAULT_SETTINGS.accent,
+          scanlines: DEFAULT_SETTINGS.scanlines,
+          credits: DEFAULT_SETTINGS.credits,
+          favorites: DEFAULT_SETTINGS.favorites
+        };
+        const insertResult = await withTimeout(supabaseClient.from('profiles').insert(defaults));
+        if (insertResult.error) {
+          if (isNetworkError(insertResult.error)) {
+            writeLocalProfile(user.id, window.arcadeSettings);
+            markSupabaseOffline('Supabase is temporarily unavailable. Your new profile is being kept locally for now.');
+            return false;
+          }
+          // RLS/duplicate/other database errors should not destroy the session.
+          applyProfileData(cached || defaults);
+          writeLocalProfile(user.id, window.arcadeSettings);
+          return false;
+        }
+        applyProfileData(defaults);
+        writeLocalProfile(user.id, window.arcadeSettings);
+      } else {
+        applyProfileData(data);
+        writeLocalProfile(user.id, window.arcadeSettings);
+      }
+      return true;
+    } catch (error) {
+      if (!cached) applyProfileData(cloneDefaults());
+      if (isNetworkError(error)) {
+        markSupabaseOffline('Supabase is temporarily unavailable. You can keep using the site as a guest.');
+      } else {
+        authMessage.textContent = 'Profile service error. Your session is still available.';
+      }
+      return false;
+    }
+  }
+
+  async function saveProfile(patch) {
+    if (!currentUser || !authIsConfigured) return false;
+
+    // Apply the change locally first so the UI never waits for Supabase.
+    const merged = {
+      ...window.arcadeSettings,
+      ...(patch.display_name !== undefined ? { displayName: patch.display_name } : {}),
+      ...(patch.accent !== undefined ? { accent: patch.accent } : {}),
+      ...(patch.scanlines !== undefined ? { scanlines: patch.scanlines } : {}),
+      ...(patch.credits !== undefined ? { credits: Number(patch.credits) } : {})
+    };
+    window.arcadeSettings = merged;
+    writeLocalProfile(currentUser.id, merged);
+
+    if (!supabaseClient || authServiceOffline) {
+      const pending = { ...readPendingPatch(currentUser.id), ...patch };
+      writePendingPatch(currentUser.id, pending);
+      return false;
+    }
+
+    try {
+      const { error } = await withTimeout(
+        supabaseClient.from('profiles').update(patch).eq('id', currentUser.id)
+      );
+      if (error) {
+        const pending = { ...readPendingPatch(currentUser.id), ...patch };
+        writePendingPatch(currentUser.id, pending);
+        if (isNetworkError(error)) {
+          authServiceOffline = true;
+          if (authMessage) authMessage.textContent = 'Supabase is offline. Your change was saved on this device and will retry when it is back.';
+        }
+        return false;
+      }
+      const pending = readPendingPatch(currentUser.id);
+      if (Object.keys(pending).length) clearPendingPatch(currentUser.id);
+      return true;
+    } catch (error) {
+      writePendingPatch(currentUser.id, { ...readPendingPatch(currentUser.id), ...patch });
+      if (isNetworkError(error)) authServiceOffline = true;
+      return false;
+    }
+  }
+
+  async function flushPendingProfile() {
+    if (!currentUser || !supabaseClient) return;
+    const pending = readPendingPatch(currentUser.id);
+    if (!Object.keys(pending).length) {
+      authServiceOffline = false;
+      return;
+    }
+
+    try {
+      const { error } = await withTimeout(
+        supabaseClient.from('profiles').update(pending).eq('id', currentUser.id)
+      );
+      if (!error) {
+        clearPendingPatch(currentUser.id);
+        authServiceOffline = false;
+        if (authMessage) authMessage.textContent = '';
+      }
+    } catch (_) {}
+  }
+
+  // Exposed so the game-click handler can persist a credit spend.
+  window.persistCredits = function (newCredits) {
+    if (currentUser) saveProfile({ credits: newCredits });
+    else window.arcadeSettings.credits = newCredits;
+    updateCreditsDisplay();
+  };
+
+  // Exposed so toggling a favorite star saves it to the account
+  // when logged in (guests just keep it in memory for the session).
+  window.persistFavorites = function (newFavorites) {
+    if (currentUser) saveProfile({ favorites: newFavorites });
+  };
+
+  // Auto-regen: everyone gets +20 credits every 5 minutes, whether
+  // logged in or playing as a guest. Guests just get it added to
+  // their in-memory balance; logged-in players get it saved too.
+  const CREDIT_REGEN_AMOUNT = 20;
+  const CREDIT_REGEN_INTERVAL_MS = 5 * 60 * 1000;
+
+  setInterval(() => {
+    const newTotal = (window.arcadeSettings.credits || 0) + CREDIT_REGEN_AMOUNT;
+    window.persistCredits(newTotal);
+  }, CREDIT_REGEN_INTERVAL_MS);
+
+  const shopBtn = document.getElementById('shopBtn');
+  const shopOverlay = document.getElementById('shopOverlay');
+  const closeShopBtn = document.getElementById('closeShopBtn');
+
+  function setShopOpen(open) {
+    shopOverlay.classList.toggle('open', open);
+    shopOverlay.setAttribute('aria-hidden', String(!open));
+    if (open) updateShopUI();
+  }
+
+  shopBtn.addEventListener('click', () => setShopOpen(true));
+  closeShopBtn.addEventListener('click', () => setShopOpen(false));
+  shopOverlay.addEventListener('click', (event) => {
+    if (event.target === shopOverlay) setShopOpen(false);
+  });
+
+  document.querySelectorAll('.shop-buy').forEach(btn => {
+    btn.addEventListener('click', () => {
+      purchaseShopItem(btn.dataset.shopId, Number(btn.dataset.cost) || 0);
+    });
+  });
+
+  loadShopData();
+
+  async function runAuthAction(action, gateOnly = false) {
+  
+  if (!supabaseClient) {
+      markSupabaseOffline('Account service is unavailable right now. The arcade is still available in guest mode.');
+      return null;
+    }
+
+    const result = await withTimeout(action);
+    if (result.error && isNetworkError(result.error)) {
+      markSupabaseOffline('Supabase is temporarily offline. The arcade will keep working in guest mode.');
+    }
+    return result;
+  }
+
+  if (!supabaseClient) {
+    markSupabaseOffline(
+      supabaseSdkAvailable
+        ? 'Supabase is not configured. The arcade is still available in guest mode.'
+        : 'Supabase could not be reached, so the arcade is available in guest mode.'
+    );
+  } else {
+    async function handleLogin(email, password, gateOnly = false) {
+      if (!email || !password) {
+        setAuthMessage('Enter an email and password.', gateOnly);
+        return;
+      }
+
+      const result = await runAuthAction(
+        supabaseClient.auth.signInWithPassword({ email, password }),
+        gateOnly
+      );
+      if (!result) return;
+
+      const { data, error } = result;
+      if (error) {
+        setAuthMessage(error.message || 'Could not log in.', gateOnly);
+        return;
+      }
+
+      setAuthMessage('', gateOnly);
+      await loadProfile(data.user);
+      showLoggedIn(data.user);
+      await flushPendingProfile();
+    }
+
+    async function handleSignup(email, password, gateOnly = false) {
+      if (!email || !password) {
+        setAuthMessage('Enter an email and password.', gateOnly);
+        return;
+      }
+
+      const result = await runAuthAction(
+        supabaseClient.auth.signUp({ email, password }),
+        gateOnly
+      );
+      if (!result) return;
+
+      const { data, error } = result;
+      if (error) {
+        setAuthMessage(error.message || 'Could not create the account.', gateOnly);
+      } else if (data.user && !data.session) {
+        setAuthMessage('Check your email to confirm your account, then log in.', gateOnly);
+      } else if (data.session) {
+        setAuthMessage('', gateOnly);
+        await loadProfile(data.user);
+        showLoggedIn(data.user);
+        await flushPendingProfile();
+      }
+    }
+
+    signupBtn.addEventListener('click', () =>
+      handleSignup(authEmail.value.trim(), authPassword.value, false)
+    );
+
+    loginBtn.addEventListener('click', () =>
+      handleLogin(authEmail.value.trim(), authPassword.value, false)
+    );
+
+    logoutBtn.addEventListener('click', async () => {
+      try {
+        if (supabaseClient) await withTimeout(supabaseClient.auth.signOut());
+      } catch (_) {}
+      showLoggedOut();
+    });
+
+    // Restore a session from Supabase's local auth storage. If the network is
+    // down, cached profile data can still populate the account UI.
+    (async () => {
+      try {
+        const { data, error } = await withTimeout(supabaseClient.auth.getSession());
+        if (error) {
+          if (isNetworkError(error)) markSupabaseOffline('Supabase is temporarily offline. The arcade is available in guest mode.');
+          return;
+        }
+        if (data?.session?.user) {
+          const user = data.session.user;
+          await loadProfile(user);
+          showLoggedIn(user);
+          await flushPendingProfile();
+        }
+      } catch (error) {
+        if (isNetworkError(error)) markSupabaseOffline('Supabase is temporarily offline. The arcade is available in guest mode.');
+      }
+    })();
+
+    supabaseClient.auth.onAuthStateChange((event, session) => {
+      if (event === 'SIGNED_OUT') {
+        showLoggedOut();
+      } else if (session?.user) {
+        // Do not block the auth event callback on a database request.
+        loadProfile(session.user).then(() => showLoggedIn(session.user));
+      }
+    });
+
+    gateLoginBtn.addEventListener('click', () =>
+      handleLogin(gateEmail.value.trim(), gatePassword.value, true)
+    );
+
+    gateSignupBtn.addEventListener('click', () =>
+      handleSignup(gateEmail.value.trim(), gatePassword.value, true)
+    );
+
+    window.addEventListener('online', async () => {
+      if (!supabaseClient || !currentUser) return;
+      authServiceOffline = false;
+      await flushPendingProfile();
+      await loadProfile(currentUser);
+    });
+
+    // Retry unsent profile changes periodically while the page remains open.
+    profileSaveTimer = window.setInterval(() => {
+      if (navigator.onLine && currentUser) flushPendingProfile();
+    }, 30000);
+  }
+
+  function openSettings() {
+    playerNameInput.value = window.arcadeSettings.displayName;
+    applySettingsToUI();
+    applyExtraSettings(extraSettings);
+    updateCreditsDisplay();
+    applyExtraSettings(extraSettings);
+    settingsOverlay.classList.add('open');
+  }
+
+  function updateCreditsDisplay() {
+    const el = document.getElementById('creditsDisplay');
+    if (el) el.textContent = window.arcadeSettings.credits;
+  }
+
+  function closeSettings() {
+    settingsOverlay.classList.remove('open');
+  }
+
+  settingsBtn.addEventListener('click', openSettings);
+  closeSettingsBtn.addEventListener('click', closeSettings);
+  settingsOverlay.addEventListener('click', (e) => {
+    if (e.target === settingsOverlay) closeSettings();
+  });
+
+  swatchRow.querySelectorAll('.swatch').forEach(sw => {
+    sw.addEventListener('click', () => {
+      swatchRow.querySelectorAll('.swatch').forEach(s => s.classList.remove('selected'));
+      sw.classList.add('selected');
+      const color = sw.dataset.color;
+      window.arcadeSettings.accent = color;
+      document.documentElement.style.setProperty('--cyan', color);
+      saveProfile({ accent: color });
+    });
+  });
+
+  glowChoices.querySelectorAll('.settings-choice').forEach(btn => {
+    btn.addEventListener('click', () => {
+      extraSettings.glow = btn.dataset.glow;
+      applyExtraSettings(extraSettings);
+      writeExtraSettings(extraSettings);
+    });
+  });
+
+  spacingChoices.querySelectorAll('.settings-choice').forEach(btn => {
+    btn.addEventListener('click', () => {
+      extraSettings.spacing = btn.dataset.spacing;
+      applyExtraSettings(extraSettings);
+      writeExtraSettings(extraSettings);
+    });
+  });
+
+  function toggleMotion() {
+    extraSettings.motion = !extraSettings.motion;
+    applyExtraSettings(extraSettings);
+    writeExtraSettings(extraSettings);
+  }
+
+  function toggleSound() {
+    extraSettings.sound = !extraSettings.sound;
+    applyExtraSettings(extraSettings);
+    writeExtraSettings(extraSettings);
+  }
+
+  soundToggle.addEventListener('click', toggleSound);
+  soundToggle.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      toggleSound();
+    }
+  });
+
+  contrastChoices.querySelectorAll('.settings-choice').forEach(btn => {
+    btn.addEventListener('click', () => {
+      extraSettings.contrast = btn.dataset.contrast;
+      applyExtraSettings(extraSettings);
+      writeExtraSettings(extraSettings);
+    });
+  });
+
+  motionToggle.addEventListener('click', toggleMotion);
+  motionToggle.addEventListener('keydown', (event) => {
+    if (event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      toggleMotion();
+    }
+  });
+
+  scanlineToggle.addEventListener('click', () => {
+    const isOn = scanlineToggle.classList.toggle('on');
+    window.arcadeSettings.scanlines = isOn;
+    document.body.classList.toggle('no-scanlines', !isOn);
+    saveProfile({ scanlines: isOn });
+  });
+
+  saveSettingsBtn.addEventListener('click', () => {
+    const name = playerNameInput.value.trim() || 'You';
+    window.arcadeSettings.displayName = name;
+    saveProfile({ display_name: name });
+    closeSettings();
+  });
+
+  // ============== MUSIC PLAYER ==============
+  // Add your own tracks here. Each needs a title and a src path
+  // pointing to an audio file you've uploaded to your repo (e.g.
+  // a "music" folder next to index.html). Files you can add:
+  // mp3, ogg, or wav all work in the <audio> element.
+  const TRACKS = [
+    { title: 'White Ferrari', src: 'music/white-ferrari.mp3' },
+    { title: 'Runaway', src: 'music/runaway.mp3' },
+    { title: 'All Falls Down', src: 'music/all-falls-down.mp3' }
+  ];
+
+  const musicBtn = document.getElementById('musicBtn');
+  const musicOverlay = document.getElementById('musicOverlay');
+  const nowPlayingLabel = document.getElementById('nowPlayingLabel');
+  const playPauseBtn = document.getElementById('playPauseBtn');
+  const prevTrackBtn = document.getElementById('prevTrackBtn');
+  const nextTrackBtn = document.getElementById('nextTrackBtn');
+  const volumeTrack = document.getElementById('volumeTrack');
+  const volumeFill = document.getElementById('volumeFill');
+  const volumeHandle = document.getElementById('volumeHandle');
+  const trackListEl = document.getElementById('trackList');
+  const disc = document.getElementById('disc');
+  const progressTrack = document.getElementById('progressTrack');
+  const progressFill = document.getElementById('progressFill');
+  const currentTimeLabel = document.getElementById('currentTimeLabel');
+  const durationLabel = document.getElementById('durationLabel');
+  const closeMusicBtn = document.getElementById('closeMusicBtn');
+  const volumePercent = document.getElementById('volumePercent');
+
+  const audioPlayer = new Audio();
+  audioPlayer.volume = 0.6;
+  volumePercent.textContent = '60%';
+  let currentTrackIndex = -1;
+
+  TRACKS.forEach((track, i) => {
+    const li = document.createElement('li');
+    const btn = document.createElement('button');
+    btn.type = 'button';
+    btn.textContent = track.title;
+    btn.addEventListener('click', () => playTrack(i));
+    li.appendChild(btn);
+    trackListEl.appendChild(li);
+  });
+
+  function refreshTrackHighlight() {
+    trackListEl.querySelectorAll('button').forEach((btn, i) => {
+      btn.classList.toggle('playing', i === currentTrackIndex && !audioPlayer.paused);
+    });
+  }
+
+  function formatTime(seconds) {
+    if (!isFinite(seconds) || seconds < 0) return '0:00';
+    const m = Math.floor(seconds / 60);
+    const s = Math.floor(seconds % 60).toString().padStart(2, '0');
+    return `${m}:${s}`;
+  }
+
+  function playTrack(index) {
+    if (index < 0 || index >= TRACKS.length) return;
+    currentTrackIndex = index;
+    const track = TRACKS[index];
+
+    audioPlayer.pause();
+    audioPlayer.src = track.src;
+    audioPlayer.load();
+    nowPlayingLabel.textContent = 'Loading...';
+    disc.classList.remove('spinning');
+
+    audioPlayer.play()
+      .then(() => {
+        nowPlayingLabel.textContent = track.title;
+        playPauseBtn.textContent = '⏸';
+        disc.classList.add('spinning');
+        refreshTrackHighlight();
+      })
+      .catch((error) => {
+        console.error('Music player error loading "' + track.src + '":', error);
+        nowPlayingLabel.textContent = 'Could not play "' + track.title + '" — check the file exists at ' + track.src;
+        playPauseBtn.textContent = '▶';
+        disc.classList.remove('spinning');
+        refreshTrackHighlight();
+      });
+  }
+
+  playPauseBtn.addEventListener('click', () => {
+    if (currentTrackIndex === -1) {
+      playTrack(0);
+      return;
+    }
+    if (audioPlayer.paused) {
+      audioPlayer.play();
+      playPauseBtn.textContent = '⏸';
+      disc.classList.add('spinning');
+    } else {
+      audioPlayer.pause();
+      playPauseBtn.textContent = '▶';
+      disc.classList.remove('spinning');
+    }
+    refreshTrackHighlight();
+  });
+
+  prevTrackBtn.addEventListener('click', () => {
+    const next = currentTrackIndex <= 0 ? TRACKS.length - 1 : currentTrackIndex - 1;
+    playTrack(next);
+  });
+
+  nextTrackBtn.addEventListener('click', () => {
+    const next = currentTrackIndex >= TRACKS.length - 1 ? 0 : currentTrackIndex + 1;
+    playTrack(next);
+  });
+
+  audioPlayer.addEventListener('ended', () => {
+    nextTrackBtn.click();
+  });
+
+  audioPlayer.addEventListener('timeupdate', () => {
+    currentTimeLabel.textContent = formatTime(audioPlayer.currentTime);
+    durationLabel.textContent = formatTime(audioPlayer.duration);
+    const pct = audioPlayer.duration
+      ? (audioPlayer.currentTime / audioPlayer.duration) * 100
+      : 0;
+    progressFill.style.width = pct + '%';
+  });
+
+  progressTrack.addEventListener('click', (e) => {
+    if (!audioPlayer.duration) return;
+    const rect = progressTrack.getBoundingClientRect();
+    const pct = (e.clientX - rect.left) / rect.width;
+    audioPlayer.currentTime = pct * audioPlayer.duration;
+  });
+
+  function setVolume(pct) {
+    pct = Math.max(0, Math.min(100, pct));
+    audioPlayer.volume = pct / 100;
+    volumeFill.style.width = pct + '%';
+    volumeHandle.style.left = pct + '%';
+    volumePercent.textContent = Math.round(pct) + '%';
+  }
+
+  function pctFromEvent(e) {
+    const rect = volumeTrack.getBoundingClientRect();
+    const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+    return ((clientX - rect.left) / rect.width) * 100;
+  }
+
+  volumeTrack.addEventListener('click', (e) => {
+    if (e.target === volumeHandle) return;
+    setVolume(pctFromEvent(e));
+  });
+
+  let draggingVolume = false;
+
+  volumeHandle.addEventListener('pointerdown', (e) => {
+    draggingVolume = true;
+    volumeHandle.classList.add('dragging');
+    volumeHandle.setPointerCapture(e.pointerId);
+  });
+
+  volumeHandle.addEventListener('pointermove', (e) => {
+    if (!draggingVolume) return;
+    setVolume(pctFromEvent(e));
+  });
+
+  volumeHandle.addEventListener('pointerup', (e) => {
+    draggingVolume = false;
+    volumeHandle.classList.remove('dragging');
+    volumeHandle.releasePointerCapture(e.pointerId);
+  });
+
+  setVolume(60);
+
+  const updatesBtn = document.getElementById('updatesBtn');
+  const updatesOverlay = document.getElementById('updatesOverlay');
+  const closeUpdatesBtn = document.getElementById('closeUpdatesBtn');
+
+  function setUpdatesOpen(open) {
+    updatesOverlay.classList.toggle('open', open);
+    updatesOverlay.setAttribute('aria-hidden', String(!open));
+  }
+
+  updatesBtn.addEventListener('click', () => setUpdatesOpen(true));
+  closeUpdatesBtn.addEventListener('click', () => setUpdatesOpen(false));
+
+  updatesOverlay.addEventListener('click', (event) => {
+    if (event.target === updatesOverlay) setUpdatesOpen(false);
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      if (updatesOverlay.classList.contains('open')) setUpdatesOpen(false);
+      if (shopOverlay.classList.contains('open')) setShopOpen(false);
+      if (musicOverlay.classList.contains('open')) {
+        musicOverlay.classList.remove('open');
+        musicOverlay.setAttribute('aria-hidden', 'true');
+      }
+    }
+  });
+
+  closeMusicBtn.addEventListener('click', () => {
+    musicOverlay.classList.remove('open');
+    musicOverlay.setAttribute('aria-hidden', 'true');
+  });
+
+  musicBtn.addEventListener('click', () => {
+    musicOverlay.classList.add('open');
+    musicOverlay.setAttribute('aria-hidden', 'false');
+  });
+
+  musicOverlay.addEventListener('click', (e) => {
+    if (e.target === musicOverlay) {
+      musicOverlay.classList.remove('open');
+      musicOverlay.setAttribute('aria-hidden', 'true');
+    }
+  });
+</script>
+
+<script>
+
+
+  const TOTAL_GAMES = 50;
+  const list = document.getElementById('gameList');
+  const wrap = document.getElementById('playerFrameWrap');
+  const expandGameBtn = document.getElementById('expandGameBtn');
+  const expandGameText = document.getElementById('expandGameText');
+
+  function isGameLoaded() {
+    return !!wrap.querySelector('iframe, #aiGame');
+  }
+
+  function isGameExpanded() {
+    return document.fullscreenElement === wrap ||
+      document.webkitFullscreenElement === wrap ||
+      wrap.classList.contains('game-expanded');
+  }
+
+  function updateExpandButton() {
+    const expanded = isGameExpanded();
+    const loaded = isGameLoaded();
+    expandGameBtn.disabled = !loaded;
+    expandGameBtn.setAttribute('aria-pressed', String(expanded));
+    expandGameText.textContent = expanded ? 'UNEXPAND GAME' : 'EXPAND GAME';
+  }
+
+  async function expandGame() {
+    if (!isGameLoaded()) return;
+
+    try {
+      if (document.fullscreenElement === wrap) {
+        await document.exitFullscreen();
+      } else if (document.webkitFullscreenElement === wrap) {
+        document.webkitCancelFullScreen();
+      } else if (wrap.requestFullscreen) {
+        await wrap.requestFullscreen({ navigationUI: 'hide' });
+      } else if (wrap.webkitRequestFullscreen) {
+        wrap.webkitRequestFullscreen();
+      } else {
+        // Fallback for browsers that do not support the Fullscreen API.
+        wrap.classList.add('game-expanded');
+        document.body.classList.add('game-expanded-page');
+      }
+    } catch (error) {
+      // If the browser blocks fullscreen, use the CSS fallback instead.
+      wrap.classList.add('game-expanded');
+      document.body.classList.add('game-expanded-page');
+    }
+
+    updateExpandButton();
+  }
+
+  function exitGameExpansion() {
+    if (document.fullscreenElement === wrap) {
+      document.exitFullscreen().catch(() => {});
+    } else if (document.webkitFullscreenElement === wrap) {
+      document.webkitCancelFullScreen();
+    }
+    wrap.classList.remove('game-expanded');
+    document.body.classList.remove('game-expanded-page');
+    updateExpandButton();
+  }
+
+  expandGameBtn.addEventListener('click', expandGame);
+
+  document.addEventListener('fullscreenchange', () => {
+    if (!document.fullscreenElement && !document.webkitFullscreenElement) {
+      wrap.classList.remove('game-expanded');
+      document.body.classList.remove('game-expanded-page');
+    }
+    updateExpandButton();
+  });
+
+  document.addEventListener('webkitfullscreenchange', updateExpandButton);
+
+  // ESC also closes the CSS fallback mode. Native browser fullscreen exits on ESC automatically.
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape' && wrap.classList.contains('game-expanded')) {
+      exitGameExpansion();
+    }
+  });
+
+  updateExpandButton();
+
+  // Fill in a name between the quotes to label that slot.
+  // Leave it as "" to keep showing "Empty" for that number.
+  const gameNames = [
+    "Ages of Conflict", // 01
+    "BitLife", // 02
+    "AI Assistant", // 03
+    "Core Ball", // 04
+    "Drive Mad", // 05
+    "Fnaf", // 06
+    "Super Liquid Soccer", // 07
+    "Learn To Fly 2", // 08
+    "MineCraft!", // 09
+    "Chat", // 10
+    "UnderTale", // 11
+    "10 Minutes Till Dawn", // 12
+    "Boxing Random", // 13
+    "Soccer Random", // 14
+    "Basket Random", // 15
+    "Volley Random", // 16
+    "Cookie Clicker", // 17
+    "Draw The Hill", // 18
+    "Bloons TD4", // 19
+    "Geometry Dash", // 20
+    "Rooftop Snipers", // 21
+    "Duck Life 4", // 22
+    "Bottle Flip 3D", // 23
+    "Crossy Road", // 24
+    "Apple Shooter", // 25
+    "Retro Bowl", // 26
+    "Retro Bowl College", // 27
+    "Sm64", // 28
+    "Tag", // 29
+    "Slope", // 30
+    "AMAZON LUNA", // 31
+    "COMING SOON!", // 32
+    "COMING SOON!", // 33
+    "COMING SOON!", // 34
+    "COMING SOON!", // 35
+    "COMING SOON!", // 36
+    "COMING SOON!", // 37
+    "COMING SOON!", // 38
+    "COMING SOON!", // 39
+    "COMING SOON!", // 40
+    "COMING SOON!", // 41
+    "COMING SOON!", // 42
+    "COMING SOON!", // 43
+    "COMING SOON!", // 44
+    "COMING SOON!", // 45
+    "COMING SOON!", // 46
+    "COMING SOON!", // 47
+    "COMING SOON!", // 48
+    "COMING SOON!", // 49
+    "COMING SOON!"  // 50
+  ];
+
+  // Optional: paste a full URL here to make that slot load an outside
+  // game link instead of a local games/game-NN.html file.
+  // Leave "" to use the local file for that slot.
+  const gameLinks = [
+    "https://4yqt7wrhtx-ship-it.github.io/casual-games/ages-of-conflict/", // 01
+    "https://4yqt7wrhtx-ship-it.github.io/strategy-games/bitlife/", // 02
+    "https://gabe-ai-backend.portalex987.workers.dev/api/chat", // 03
+    "https://4yqt7wrhtx-ship-it.github.io/casual-games/core-ball/", // 04
+    "https://4yqt7wrhtx-ship-it.github.io/driving-games/drive-mad/", // 05
+    "https://4yqt7wrhtx-ship-it.github.io/action-games/fnaf/", // 06
+    "https://4yqt7wrhtx-ship-it.github.io/driving-games/super-liquid-soccer/", // 07
+    "https://4yqt7wrhtx-ship-it.github.io/casual-games/learn-to-fly-2/", // 08
+    "https://4yqt7wrhtx-ship-it.github.io/action-games/minecraft-15/", // 09
+    "https://remained-but-equation-subjective.trycloudflare.com/", // 10
+    "https://wigdos-inc.github.io/Undertale-HTML/", // 11
+    "https://4yqt7wrhtx-ship-it.github.io/action-games/10-minutes-till-dawn", // 12
+    "https://4yqt7wrhtx-ship-it.github.io/driving-games/boxing-random/", // 13
+    "https://4yqt7wrhtx-ship-it.github.io/driving-games/soccer-random/", // 14
+    "https://4yqt7wrhtx-ship-it.github.io/driving-games/basket-random/", // 15
+    "https://4yqt7wrhtx-ship-it.github.io/driving-games/volley-random/", // 16
+    "https://4yqt7wrhtx-ship-it.github.io/casual-games/cookie-clicker/", // 17
+    "https://4yqt7wrhtx-ship-it.github.io/driving-games/draw-the-hill/", // 18
+    "https://4yqt7wrhtx-ship-it.github.io/strategy-games/bloonstd4/", // 19
+    "https://geometrydash.com/game/", // 20
+    "https://4yqt7wrhtx-ship-it.github.io/action-games/rooftop-snipers/", // 21
+    "https://4yqt7wrhtx-ship-it.github.io/casual-games/ducklife4/", // 22
+    "https://4yqt7wrhtx-ship-it.github.io/casual-games/bottle-flip-3d/", // 23
+    "https://4yqt7wrhtx-ship-it.github.io/strategy-games/crossyroad/", // 24
+    "https://4yqt7wrhtx-ship-it.github.io/action-games/apple-shooter/", // 25
+    "https://4yqt7wrhtx-ship-it.github.io/driving-games/retro-bowl/", // 26
+    "https://4yqt7wrhtx-ship-it.github.io/driving-games/retro-bowl-college/", // 27
+    "https://4yqt7wrhtx-ship-it.github.io/action-games/sm64/", // 28
+    "https://4yqt7wrhtx-ship-it.github.io/action-games/tag/", // 29
+    "https://4yqt7wrhtx-ship-it.github.io/action-games/slope/", // 30
+    "", // 31
+    "", // 32
+    "", // 33
+    "", // 34
+    "", // 35
+    "", // 36
+    "", // 37
+    "", // 38
+    "", // 39
+    "", // 40
+    "", // 41
+    "", // 42
+    "", // 43
+    "", // 44
+    "", // 45
+    "", // 46
+    "", // 47
+    "", // 48
+    "", // 49
+    ""  // 50
+  ];
+
+  const controllerIcon = `
+    <svg class="slot-icon" viewBox="0 0 24 24">
+      <path d="M6 9h2M7 8v2M14 9h.01M17 11h.01" stroke-linecap="round"/>
+      <path d="M7.5 6h9a4 4 0 0 1 3.98 4.4l-.6 5.6a2.4 2.4 0 0 1-4.2 1.4l-1.1-1.4H8.42l-1.1 1.4a2.4 2.4 0 0 1-4.2-1.4l-.6-5.6A4 4 0 0 1 6.5 6h1z" stroke-linejoin="round"/>
+    </svg>
+  `;
+
+  for (let i = 1; i <= TOTAL_GAMES; i++) {
+    const num = String(i).padStart(2, '0');
+    const label = gameNames[i - 1] || 'Empty';
+    const li = document.createElement('li');
+    const btn = document.createElement('button');
+    btn.className = 'game-button';
+    btn.dataset.src = gameLinks[i - 1] || `games/game-${num}.html`;
+    btn.dataset.slot = String(i);
+    btn.innerHTML = `
+      ${controllerIcon}
+      <span class="slot-number">${num}</span>
+      <span class="slot-label">${label}</span>
+    `;
+
+    const star = document.createElement('button');
+    star.type = 'button';
+    star.className = 'fav-star';
+    star.dataset.slot = String(i);
+    star.setAttribute('aria-label', 'Toggle favorite');
+    star.innerHTML = '★';
+    star.addEventListener('click', (e) => {
+      e.stopPropagation();
+      toggleFavorite(i);
+    });
+    btn.appendChild(star);
+
+    li.appendChild(btn);
+    list.appendChild(li);
+  }
+
+  const gameSearch = document.getElementById('gameSearch');
+  const searchStatus = document.getElementById('searchStatus');
+  const noSearchResults = document.getElementById('noSearchResults');
+
+  function filterGames() {
+    const query = gameSearch.value.trim().toLowerCase();
+    const gameItems = Array.from(list.querySelectorAll('li'));
+    let visibleCount = 0;
+
+    gameItems.forEach((item) => {
+      const label = item.querySelector('.slot-label');
+      const name = label ? label.textContent.trim().toLowerCase() : '';
+      const matches = !query || name.includes(query);
+      item.classList.toggle('search-hidden', !matches);
+      if (matches) visibleCount++;
+    });
+
+    searchStatus.textContent = `${visibleCount} ${visibleCount === 1 ? 'GAME' : 'GAMES'}`;
+    noSearchResults.hidden = visibleCount !== 0;
+  }
+
+  gameSearch.addEventListener('input', filterGames);
+  filterGames();
+
+  const buttons = document.querySelectorAll('.game-button');
+
+  const favoritesList = document.getElementById('favoritesList');
+
+  function refreshFavoriteStars() {
+    const favs = window.arcadeSettings.favorites || [];
+    document.querySelectorAll('.fav-star').forEach(star => {
+      const slot = Number(star.dataset.slot);
+      star.classList.toggle('favorited', favs.includes(slot));
+    });
+  }
+
+  window.toggleFavorite = function (slot) {
+    const favs = window.arcadeSettings.favorites || [];
+    const idx = favs.indexOf(slot);
+    let newFavs;
+    if (idx === -1) {
+      newFavs = [...favs, slot];
+    } else {
+      newFavs = favs.filter(s => s !== slot);
+    }
+    window.arcadeSettings.favorites = newFavs;
+    if (window.persistFavorites) window.persistFavorites(newFavs);
+    refreshFavoriteStars();
+    window.renderFavorites();
+  };
+
+  window.renderFavorites = function () {
+    const favs = window.arcadeSettings.favorites || [];
+    favoritesList.innerHTML = '';
+
+    if (favs.length === 0) {
+      favoritesList.innerHTML = '<div class="favorites-empty">No favorites yet -- click the star on any game to add it here.</div>';
+      refreshFavoriteStars();
+      return;
+    }
+
+    favs.forEach(slot => {
+      const mainBtn = document.querySelector(`.game-button[data-slot="${slot}"]`);
+      if (!mainBtn) return;
+      const label = mainBtn.querySelector('.slot-label').textContent;
+      const num = mainBtn.querySelector('.slot-number').textContent;
+
+      const li = document.createElement('li');
+      const btn = document.createElement('button');
+      btn.className = 'game-button';
+      btn.innerHTML = `
+        ${controllerIcon}
+        <span class="slot-number">${num}</span>
+        <span class="slot-label">${label}</span>
+      `;
+      btn.addEventListener('click', () => mainBtn.click());
+      li.appendChild(btn);
+      favoritesList.appendChild(li);
+    });
+
+    refreshFavoriteStars();
+  };
+
+  refreshFavoriteStars();
+  window.renderFavorites();
+
+  buttons.forEach(btn => {
+    btn.addEventListener('click', () => {
+      // Don't re-charge a credit for reopening the game that's already loaded.
+      if (btn.classList.contains('active')) return;
+
+      if (window.arcadeSettings.credits <= 0) {
+        buttons.forEach(b => b.classList.remove('active'));
+        wrap.innerHTML = `
+          <p class="placeholder">
+            OUT OF CREDITS<br><br>
+            Open Settings (top right) to check your balance.
+          </p>
+        `;
+        return;
+      }
+
+      window.arcadeSettings.credits -= 1;
+      if (window.persistCredits) window.persistCredits(window.arcadeSettings.credits);
+      updateCreditsDisplay();
+
+      buttons.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      wrap.innerHTML = '';
+
+      const slot = btn.querySelector('.slot-number').textContent;
+
+      if (slot === '03') {
+        const aiGame = document.createElement('div');
+        aiGame.id = 'aiGame';
+        aiGame.style.cssText = 'width:100%;height:100%;min-height:0;display:flex;flex-direction:column;';
+        aiGame.innerHTML = `
+
+<header>
+  <span class="dot"></span>
+  <h1>AI GABE</h1>
+  <span class="status" id="statusLabel">idle</span>
+</header>
+
+<div id="log"></div>
+
+<form id="chatForm">
+  <input type="text" id="messageInput" placeholder="Say something to Gabe..." autocomplete="off" required>
+  <button type="submit" id="sendBtn">Send</button>
+</form>
+
+
+
+`;
+
+        wrap.appendChild(aiGame);
+        updateExpandButton();
+
+        const script = document.createElement('script');
+        script.textContent = `
+(function () {
+  // This is the public Worker URL, not the Google API key.
+  // Update the path to /chat for the Gemini Worker code supplied in chat.
+  const AI_ENDPOINT = "https://gabe-ai-backend.portalex987.workers.dev/chat";
+
+  const log = document.querySelector('#aiGame #log');
+  const form = document.querySelector('#aiGame #chatForm');
+  const input = document.querySelector('#aiGame #messageInput');
+  const sendBtn = document.querySelector('#aiGame #sendBtn');
+  const statusLabel = document.querySelector('#aiGame #statusLabel');
+
+  // Keep only completed turns. The Worker adds the current message itself.
+  // Gemini history format: { role: 'user' | 'model', text: '...' }
+  let history = [];
+
+  function addMessage(text, sender, isTyping) {
+    const div = document.createElement('div');
+    div.className = 'msg ' + (sender === 'me' ? 'me' : 'them') + (isTyping ? ' typing' : '');
+    const senderSpan = document.createElement('span');
+    senderSpan.className = 'sender';
+    senderSpan.textContent = sender === 'me' ? (window.arcadeSettings.displayName || 'You') : 'Gabe';
+    if (sender === 'me') {
+      senderSpan.style.color = getNameColor();
+      const nameEffectClass = getNameEffectClass();
+      if (nameEffectClass) senderSpan.classList.add(nameEffectClass);
+      const badge = getChatBadge();
+      if (badge) {
+        const badgeSpan = document.createElement('span');
+        badgeSpan.className = 'profile-badge-icon';
+        badgeSpan.textContent = badge;
+        badgeSpan.title = shopData.chatBadge === 'badge-vip' ? 'VIP Badge' : (shopData.chatBadge === 'badge-glitch' ? 'Glitch Badge' : 'Arcade Badge');
+        badgeSpan.setAttribute('aria-label', badgeSpan.title);
+        senderSpan.appendChild(badgeSpan);
+      }
+      if (shopData.nameFrame) {
+        senderSpan.style.display = 'inline-block';
+        senderSpan.style.padding = '2px 7px';
+        senderSpan.style.border = '1px solid ' + getNameColor();
+        senderSpan.style.borderRadius = '7px';
+        senderSpan.style.boxShadow = '0 0 9px ' + getNameColor();
+      }
+      const title = getActiveTitle();
+      if (title) {
+        const titleSpan = document.createElement('span');
+        titleSpan.textContent = ' ' + title;
+        titleSpan.style.color = 'var(--gold)';
+        titleSpan.style.marginLeft = '6px';
+        titleSpan.style.fontSize = '0.58rem';
+        titleSpan.style.opacity = '0.9';
+        senderSpan.appendChild(titleSpan);
+      }
+    }
+    div.appendChild(senderSpan);
+    div.appendChild(document.createTextNode(text));
+    log.appendChild(div);
+    log.scrollTop = log.scrollHeight;
+    return div;
+  }
+
+  statusLabel.textContent = 'online';
+  addMessage("Hey! I'm Gabe. What's up?", 'them');
+
+  form.addEventListener('submit', async (e) => {
+    e.preventDefault();
+
+    const text = input.value.trim();
+    if (!text || sendBtn.disabled) return;
+
+    addMessage(text, 'me');
+    input.value = '';
+    sendBtn.disabled = true;
+    input.disabled = true;
+
+    const typingEl = addMessage('Gabe is thinking...', 'them', true);
+    statusLabel.textContent = 'thinking...';
+
+    const controller = new AbortController();
+    // Prevent a broken connection or a stalled provider from leaving the UI
+    // in a permanent typing state. This is longer than the Worker retry window.
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+    let requestSucceeded = false;
+
+    try {
+      const response = await fetch(AI_ENDPOINT, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          message: text,
+          history: history.slice(-12)
+        }),
+        signal: controller.signal
+      });
+
+      const responseText = await response.text();
+      let data;
+
+      try {
+        data = JSON.parse(responseText);
+      } catch {
+        data = {
+          error: 'The Worker returned a non-JSON response.',
+          details: responseText.slice(0, 500)
+        };
+      }
+
+      if (!response.ok || data.error) {
+        const errorParts = [data.error || 'The AI could not respond.'];
+        if (data.status) errorParts.push('HTTP ' + data.status);
+        else if (!response.ok) errorParts.push('HTTP ' + response.status);
+        if (data.details) errorParts.push(String(data.details).slice(0, 900));
+        addMessage('Error: ' + errorParts.join(' — '), 'them');
+      } else if (typeof data.reply === 'string' && data.reply.trim()) {
+        const reply = data.reply.trim();
+        addMessage(reply, 'them');
+        history.push({ role: 'user', text });
+        history.push({ role: 'model', text: reply });
+        history = history.slice(-12);
+        requestSucceeded = true;
+      } else {
+        addMessage(
+          'Gabe received an unexpected response. Please try again.',
+          'them'
+        );
+      }
+    } catch (err) {
+      const message = controller.signal.aborted
+        ? 'Gabe took too long to respond (30-second timeout). Please try again.'
+        : 'Could not reach Gabe: ' +
+          (err && err.message
+            ? err.message
+            : 'Network or CORS error. Check the Worker URL and Cloudflare settings.');
+      addMessage(message, 'them');
+    } finally {
+      clearTimeout(timeoutId);
+      if (typingEl && typingEl.isConnected) typingEl.remove();
+      statusLabel.textContent = requestSucceeded ? 'online' : 'ready';
+      sendBtn.disabled = false;
+      input.disabled = false;
+      input.focus();
+    }
+  });
+})();
+`;
+        aiGame.appendChild(script);
+      } else {
+        const src = btn.dataset.src;
+
+        // Never try to display the Supabase project host as a game iframe.
+        // Supabase is an API/auth service, not an embeddable game page.
+        if (/^https?:\/\/[^/]+\.supabase\.co(?:\/|$)/i.test(src)) {
+          wrap.innerHTML = `
+            <p class="placeholder">
+              This game cannot be displayed here because its URL points to a Supabase service.<br><br>
+              Check that game's URL and make sure it points to the actual game page.
+            </p>
+          `;
+          return;
+        }
+
+        const iframe = document.createElement('iframe');
+        iframe.src = src;
+        iframe.loading = 'lazy';
+        iframe.referrerPolicy = 'strict-origin-when-cross-origin';
+        iframe.setAttribute('title', 'Game ' + btn.querySelector('.slot-number').textContent);
+        iframe.setAttribute('allowfullscreen', '');
+        wrap.appendChild(iframe);
+        updateExpandButton();
+      }
+    });
+  });
+</script>
+
+</body>
+</html>
